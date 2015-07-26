@@ -1,0 +1,160 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<title>SSCD</title>
+
+	<script src="../dist/sscd.1.0.min.js"></script>
+	
+</head>
+
+<body style="padding:0; margin:0; overflow: hidden;">
+
+	<!-- main canvas we render and create comic on -->
+	<canvas id="mainCanvas" class="main" width="1280" height="1024" style="padding:0; margin:0; z-index:1000; position:fixed;"></canvas>
+	<div style="position:fixed; z-index: 1000">
+		<h1 style="position:fixed; left:10px; top:10px; color:#555;">SSCD Example III</h1>
+		<p style="position:fixed; left:10px; top:60px; color:#555; font-size:120%">
+		In this example we use collision tags.<br />
+		Click on a shape to pick it up, and click again to drop it. <br /> <br />
+		At the panel below you will see which shapes currently collide with the shape you are currently dragging. <br />
+		<b>Shapes will only collide with other shapes that have the same tags! shapes with the same tags are marked with the same color.</b>
+		</p>
+		<p style="position:fixed; left:150px; top:220px; color:#555; font-size:120%"><b>AIR</b></p>
+		<p style="position:fixed; left:500px; top:220px; color:#555; font-size:120%"><b>WATER</b></p>
+		<p style="position:fixed; left:750px; top:220px; color:#555; font-size:120%"><b>FIRE</b></p>
+		<p style="position:fixed; left:890px; top:220px; color:#555; font-size:120%"><b>ALL ELEMENTS</b></p>
+		<input id="text-panel" style="position:fixed; left: 0px; padding-left: 10px; bottom: 10px; z-index: 1000; font-size: 160%; width: 100%" value="" readonly></input>
+	</div>
+	<script>
+	
+		// get canvas and 2d context
+		var canvas = document.getElementById("mainCanvas");
+		var ctx = canvas.getContext('2d');
+	
+		// resize canvas to fit fullscreen
+		function resizeCanvas() {
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+		}
+		window.addEventListener('resize', resizeCanvas, false);
+		resizeCanvas();
+	
+		// keep track on mouse position
+		var mouse_pos = new SSCD.Vector(0, 0);
+		document.onmousemove = function (e) {
+		
+			// get new mouse position
+			var new_mouse_pos = new SSCD.Vector(e.pageX, e.pageY);
+			
+			// if we have selected shape move it
+			if (selected_shape)
+			{
+				selected_shape.move(new_mouse_pos.sub(mouse_pos));
+			}
+			
+			// set mouse position
+			mouse_pos = new_mouse_pos;
+		}
+
+		// create a collision world with grid size of 200
+		var world = new SSCD.World({grid_size: 200});
+		
+		// add test objects to world
+		world.add(new SSCD.Circle(new SSCD.Vector(100, 380), 75)).set_collision_tags("air");
+		world.add(new SSCD.Rectangle(new SSCD.Vector(210, 300), new SSCD.Vector(190, 150))).set_collision_tags("air");
+		world.add(new SSCD.Line(new SSCD.Vector(450, 300), new SSCD.Vector(100, 120))).set_collision_tags("water");
+		world.add(new SSCD.LineStrip(new SSCD.Vector(580, 300), 
+									[new SSCD.Vector(100, 0), new SSCD.Vector(0, 100), new SSCD.Vector(100, 100)], true)).set_collision_tags("water");
+		world.add(new SSCD.LineStrip(new SSCD.Vector(720, 300), 
+									[new SSCD.Vector(100, 0), new SSCD.Vector(0, 100), new SSCD.Vector(100, 100), new SSCD.Vector(20, -50)], false)).set_collision_tags("fire");						
+		world.add(new SSCD.LineStrip(new SSCD.Vector(760, 450), 
+									[new SSCD.Vector(70, 0), new SSCD.Vector(20, 70), new SSCD.Vector(-100, 50), new SSCD.Vector(20, -50)], false)).set_collision_tags("fire");
+		var comp = world.add(new SSCD.CompositeShape()).set_position(new SSCD.Vector(950, 370)).set_collision_tags(["air", "water", "fire"]);
+		comp.add(new SSCD.Circle(new SSCD.Vector(0, 0), 100));
+		comp.add(new SSCD.Circle(new SSCD.Vector(70, 0), 60));
+		comp.add(new SSCD.Rectangle(new SSCD.Vector(0, 80), new SSCD.Vector(90, 90)));
+		
+		// currently selected shape, eg the shape we are dragging
+		var selected_shape = null;
+		
+		// will hold list of objects we point on with the mouse
+		var currently_point_on = [];
+		
+		// get the bottom text panel to interact with the user
+		var text_panel = document.getElementById("text-panel");
+		
+		// pickup / drop shapes on click
+		document.onclick = function()
+		{
+			// if got shape currently picked up, drop it
+			if (selected_shape)
+			{
+				selected_shape = null;
+			}
+			// if don't have any shape picked up
+			else
+			{
+				// pickup first shape we point on (if exist)
+				if (currently_point_on)
+				{
+					selected_shape = currently_point_on;
+				}
+			}
+		}
+		
+		// main loop that will render objects
+		setInterval(function ()
+		{
+			// clear canvas
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			
+			// render collision world
+			world.render(canvas);
+			
+			// if don't have any selected shape, try to select one based on mouse position
+			if (selected_shape === null)
+			{
+				// try to pick object
+				currently_point_on = world.pick_object(mouse_pos);
+				
+				// if we point on a shape:
+				if (currently_point_on)
+				{
+					text_panel.value = "Click to pickup shape with tags: '" + currently_point_on.get_collision_tags() + "'";
+				}
+				// else:
+				else
+				{
+					text_panel.value = "No shape selected.";
+				}
+			}
+			// if we got a selected shape:
+			else
+			{
+				// check collision for selected shape
+				var collide_with = [];
+				if (world.test_collision(selected_shape, selected_shape.get_collision_tags(), collide_with))
+				{
+					text_panel.value = "'" + selected_shape.get_collision_tags() + "' collide with: ";
+					for (var i = 0; i < collide_with.length; ++i)
+					{
+						text_panel.value += "'" + collide_with[i].get_collision_tags() + "', ";
+					}
+				}
+				// if don't have collision:
+				else
+				{
+					text_panel.value = "'" + selected_shape.get_collision_tags() + "' don't collide with anything.";
+				}
+			}
+		}, 1000/60);
+		
+	</script>
+
+</body>
+
+</html>
+

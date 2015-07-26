@@ -1,0 +1,189 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<title>SSCD</title>
+
+	<script src="../dist/sscd.1.0.min.js"></script>
+	
+</head>
+
+<body style="padding:0; margin:0; overflow: hidden;">
+
+	<!-- main canvas we render and create comic on -->
+	<canvas id="mainCanvas" class="main" width="1280" height="1024" style="padding:0; margin:0; z-index:1000; position:fixed;"></canvas>
+	<div id="text-div" style="position:fixed; z-index: 1000">
+		<h1 style="position:fixed; left:10px; top:10px; color:#555;">SSCD Example II</h1>
+		<p style="position:fixed; left:10px; top:60px; color:#555; font-size:160%">
+		This example is a mini-game similar to the mobile game "flappy-bird".<br /><br />
+		In this example we show 3 concepts:<br />
+		1. Big collision world with many objects (1000). <br />
+		2. Rendering the collision world with camera position. <br />
+		3. Basic collision detection with 2 basic shapes. <br /><br />
+		Controls: click anywhere to fly up, don't click to fall. Click to begin playing!
+		</p>	
+	</div>
+	<h3 id="score" style="position:fixed; top:10px; left:10px; display:none; z-index:1000">Score: <span id="score-val">0</span></h3>
+	<button id="reset-btn" style="position:fixed; top: 100px; left:100px; display: none; z-index:1000; font-size: 200%">Reset?</button>
+	<script>
+	
+		// get canvas and 2d context
+		var canvas = document.getElementById("mainCanvas");
+		var ctx = canvas.getContext('2d');
+	
+		// resize canvas to fit fullscreen
+		function resizeCanvas() {
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+			
+			// set minimal height
+			canvas.height = Math.max(canvas.height, 600);
+		}
+		window.addEventListener('resize', resizeCanvas, false);
+		resizeCanvas();
+		
+		// did we start running?
+		var running = false;
+		
+		// handle mouse down
+		document.onmousedown = function()
+		{
+			// set mouse down to true
+			mouse_down = true;
+
+			// if haven't started yet, start now
+			if (!running)
+			{
+				document.getElementById("text-div").style.display = "none";
+				document.getElementById("score").style.display = "inline-block";
+				running = true;
+			}
+		};
+		
+		// handle mouse up
+		document.onmouseup = function()
+		{
+			// set mouse down to false
+			mouse_down = false;
+		};
+		
+		// set reset function
+		document.getElementById("reset-btn").onclick = function()
+		{
+			is_dead = false;
+			running = true;
+			player.set_position(new SSCD.Vector(0, canvas.height / 2));
+			speed.y = 0;
+			document.getElementById("reset-btn").style.display = "none";
+		}
+
+		// create a collision world with grid size of 200
+		var world = new SSCD.World({grid_size: 200});
+		
+		// create all obstacles
+		for (var i = 0; i < 1000; ++i)
+		{
+			// set position
+			var pos_x = 600 + i * 500;
+			var pos_y = Math.floor((Math.random() * canvas.height) + 1);
+			
+			// random size
+			var size = Math.floor((Math.random() * 100) + 50);
+			
+			// create a random shape:
+			if (Math.floor((Math.random() * 10)) < 5)
+			{
+				var shape = world.add(new SSCD.Circle(new SSCD.Vector(pos_x, pos_y), size * 0.75));
+			}
+			else
+			{
+				var shape = world.add(new SSCD.Rectangle(new SSCD.Vector(pos_x, pos_y), new SSCD.Vector(size, size)));
+			}
+			
+			// set walls debug color
+			shape.set_debug_render_colors("white", "red");
+		}
+		
+		// create player from a composite shape
+		// note: we don't add the player shape to the collision world. we only use it to test collision and render it ourselves.
+		var player = new SSCD.CompositeShape(new SSCD.Vector(100, canvas.height / 2));
+		
+		// add circle as player body
+		var body = player.add(new SSCD.Circle(new SSCD.Vector(0, 0), 50));
+		body.set_debug_render_colors("yellow", "black");
+		
+		// add an eye and color it
+		var eye = player.add(new SSCD.Circle(new SSCD.Vector(20, -20), 10));	// eye
+		eye.set_debug_render_colors("white", "black");
+		
+		// add wings
+		var wings = player.add(new SSCD.Rectangle(new SSCD.Vector(-70, 10), new SSCD.Vector(70, 20)));
+		wings.set_debug_render_colors("yellow", "black");
+		
+		// add mouth
+		var mouth_up = player.add(new SSCD.Rectangle(new SSCD.Vector(50, -10), new SSCD.Vector(30, 10)));
+		mouth_up.set_debug_render_colors("orange", "black");
+		var mouth_down = player.add(new SSCD.Rectangle(new SSCD.Vector(50, 0), new SSCD.Vector(30, 10)));
+		mouth_down.set_debug_render_colors("orange", "black");
+		
+		// player speed on x and y axises
+		var speed = new SSCD.Vector(4, 0);
+		
+		// function to call when player lose
+		var is_dead = false;
+		function kill_player()
+		{
+			alert("YOU LOSE!");
+			is_dead = true;
+			document.getElementById("reset-btn").style.display = "block";
+		}
+		
+		// main loop that will render objects
+		setInterval(function ()
+		{
+			// clear canvas
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			
+			// set camera position based on player position
+			var camera_pos = new SSCD.Vector(player.get_position().x - 100, 0);
+			
+			// render collision world
+			world.render(canvas, camera_pos);
+			
+			// render player
+			player.render(ctx, camera_pos);
+			
+			// move player and check collision
+			if (running == false || is_dead) { return;	}
+			
+			// if collide with evil walls
+			if (world.test_collision(player))
+			{
+				kill_player();
+			}
+			
+			// if out of bounderies also die
+			if (player.get_position().y < -100 || player.get_position().y > canvas.height + 100)
+			{
+				kill_player();
+			}
+			
+			// move player
+			player.move(speed);
+			
+			// update score
+			document.getElementById("score-val").innerHTML = Math.floor(player.get_position().x / 10);
+			
+			// make player fall
+			speed.y += 0.75 * (mouse_down ? -1 : 1);
+			
+		}, 1000/60);
+		
+	</script>
+
+</body>
+
+</html>
+
