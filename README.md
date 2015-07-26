@@ -3,12 +3,12 @@ This lib provide a simple 2d collision detection for JavaScript games.
 
 ## Table of Contents
 
-- [What is it?](#)
-- [What is it not?](#)
-- [Key Features](#)
-- [How to use](#)
-- [License](#)
-- [Contact Me](#)
+- [What is it?](#what-is-it)
+- [What is it not?](#what-is-it-not)
+- [Key Features](#key-features)
+- [How to use](#how-to-use)
+- [License](#license)
+- [Contact Me](#contact-me)
 
 *TOC generated with [DocToc](http://doctoc.herokuapp.com/)*
 
