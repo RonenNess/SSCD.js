@@ -41,11 +41,25 @@ SSCD should work on all modern browsers, and its tested and confirmed on Chrome,
 
 ## How to use
 
-SSCD is very simple to use. All you have to do is to create a collision world, add shapes to it, and test collision against the world.
+First get the latest version of SSCD from dist/ folder in this git, and include it to your html header like this:
+
+```html
+<script src="sscd.1.0.min.js"></script>
+```
+
+Or
+
+```html
+<script src="sscd.1.0.js"></script>
+```
+
+For un-minified version.
+
+Now all you have to do is create a collision world, add some shapes to it, and test collisions.
 
 ### Quick example
 
-Here's a tiny example of a working collision test with a single circle:
+Let's start with a minimal working example - collision with a single circle:
 
 ```javascript
 var world = new SSCD.World();
