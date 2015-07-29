@@ -39,8 +39,9 @@ SSCD.Shape.prototype = {
 		
 		// for collision-world internal usage
 		this.__grid_chunks = [];				// list with world chunks this shape is in
-		this.__world = null;					// the parent collision world
-		this.__grid_bounderies = null;			// grid bounderies
+		this.__world = null;						// the parent collision world
+		this.__grid_bounderies = null;		// grid bounderies
+		this.__last_insert_aabb = null;		// will store the aabb at the last time this shape grid was last updated
 		
 		// set unique ids
 		this.__id = SSCD.Shape.prototype.__next_id++;

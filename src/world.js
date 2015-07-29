@@ -13,12 +13,16 @@ SSCD.VERSION = 1.1;
 // a collision world. you create an instance of this class and add bodies to it to check collision.
 //
 // params is an optional dictionary with the following optional settings:
-//			grid_size: for better performance, the world is divided into a grid of world-chunks and when collision is checked we will
-//							only match objects from the same chunk(s) on grid. this param defines the grid size. default to 512.
+//			grid_size: 		for better performance, the world is divided into a grid of world-chunks and when collision is checked we will
+//								only match objects from the same chunk(s) on grid. this param defines the grid size. default to 512.
+//			grid_error: 	max amount of pixels a shape can move before updating the collision grid. default to 2.
+//								you can increase this number to make moving objects more efficient for the price of sometimes
+//								less accurate collision around the edges. set to 0 if you want to always update grid (useful if all your moving objects move fast)
 SSCD.World = function (params) {
 	// set defaults
 	params = params || {};
 	params.grid_size = params.grid_size || 512;
+	params.grid_error = params.grid_error !== undefined ? params.grid_error : 2;
 
 	// create grid and set params
 	this.__bodies = {};
@@ -167,6 +171,7 @@ SSCD.World.prototype = {
 		// set world and grid chunks boundaries
 		obj.__world = this;
 		obj.__grid_bounderies = grids;
+		obj.__last_insert_aabb = obj.get_aabb().clone();
 		
 		// return the newly added object
 		return obj;
@@ -202,14 +207,23 @@ SSCD.World.prototype = {
 		obj.__grid_chunks = [];
 		obj.__world = null;
 		obj.__grid_bounderies = null;
+		obj.__last_insert_aabb = null;
 	},
 	
 	// update object grid when it moves or resize etc.
 	// this function is used internally by the collision shapes.
 	__update_shape_grid: function(obj)
 	{
-		this.remove(obj);
-		this.add(obj);
+		var curr_aabb = obj.get_aabb();
+		if (this.__params.grid_error === 0 ||
+			((Math.abs(curr_aabb.position.x - obj.__last_insert_aabb.position.x) > this.__params.grid_error) || 
+			(Math.abs(curr_aabb.position.y - obj.__last_insert_aabb.position.y) > this.__params.grid_error) || 
+			(Math.abs(curr_aabb.size.x - obj.__last_insert_aabb.size.x) > this.__params.grid_error) || 
+			(Math.abs(curr_aabb.size.y - obj.__last_insert_aabb.size.y) > this.__params.grid_error)))
+		{
+			this.remove(obj);
+			this.add(obj);
+		}
 	},
 	
 	// check collision and return first object found.
@@ -240,12 +254,12 @@ SSCD.World.prototype = {
 		// handle vector
 		if (obj instanceof SSCD.Vector)
 		{
-			return this.__test_collision_point(obj, collision_tags, out_list);
+			return this.__test_collision_point(obj, collision_tags, out_list, ret_objs_count);
 		}
 		// handle collision with shape
 		if (obj.is_shape)
 		{
-			return this.__test_collision_shape(obj, collision_tags, out_list);
+			return this.__test_collision_shape(obj, collision_tags, out_list, ret_objs_count);
 		}
 	},
 	
@@ -283,7 +297,7 @@ SSCD.World.prototype = {
 			}
 			
 			// if collide with object:
-			if (curr_obj.test_collide_with(vector))
+			if (this.__do_collision(curr_obj, vector))
 			{
 				// if got collision list to fill, add object and set return value to true
 				if (out_list)
@@ -375,7 +389,7 @@ SSCD.World.prototype = {
 					}
 					
 					// if collide with object:
-					if (curr_obj.test_collide_with(obj))
+					if (this.__do_collision(curr_obj, obj))
 					{
 						// if got collision list to fill, add object and set return value to true
 						if (out_list)
@@ -401,6 +415,12 @@ SSCD.World.prototype = {
 		// return if collided 
 		// note: get here only if got list to fill or if no collision found
 		return found > 0;
+	},
+	
+	// do actual collision check between source and target
+	__do_collision: function(src, target)
+	{
+		return src.test_collide_with(target);
 	},
 	
 	// debug-render all the objects in world

@@ -65,6 +65,12 @@ SSCD.AABB.prototype = {
 		{
 			this.size.y += push_size_y;
 		}
+	},
+	
+	// clone this aabb
+	clone: function()
+	{
+		return new SSCD.AABB(this.position, this.size);
 	}
 	
 };

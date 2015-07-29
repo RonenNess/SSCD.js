@@ -3,7 +3,7 @@
 import os
 import sys
 
-dest = open('dist/sscd.1.0.js', 'w')
+dest = open('dist/sscd.dev.js', 'w')
 
 for file in [
         "license.js",
