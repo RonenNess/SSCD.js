@@ -32,7 +32,7 @@ SSCD.Circle.prototype = {
 	render: function (ctx, camera_pos)
 	{
 		// apply camera on position
-		var position = this.get_position().sub(camera_pos);
+		var position = this.__position.sub(camera_pos);
 					
 		// draw the circle
 		ctx.beginPath();
@@ -54,10 +54,22 @@ SSCD.Circle.prototype = {
 		return this.__radius;
 	},
 	
+	// called to update axis-aligned-bounding-box position
+	__update_aabb_pos: function()
+	{
+		this.__aabb.position = this.__position.sub_scalar(this.__radius)
+	},
+	
 	// return axis-aligned-bounding-box
 	build_aabb: function ()
 	{
-		return new SSCD.AABB(this.get_position().sub_scalar(this.__radius), this.__size);
+		return new SSCD.AABB(this.__position.sub_scalar(this.__radius), this.__size);
+	},
+	
+	// return the absolute center of the shape
+	get_abs_center: function()
+	{
+		return this.__position.clone();
 	},
 	
 };

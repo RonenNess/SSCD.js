@@ -28,6 +28,26 @@ SSCD.Vector.prototype = {
 		return new SSCD.Vector(this.x, this.y);
 	},
 	
+	// set value from another vector
+	set: function(vector)
+	{
+		this.x = vector.x;
+		this.y = vector.y;
+	},
+	
+	// make negative (return without changing self)
+	negative: function()
+	{
+		return this.multiply_scalar(-1);
+	},
+	
+	// make negative self (multiply by -1)
+	negative_self: function()
+	{
+		this.multiply_scalar_self(-1);
+		return this;
+	},
+	
 	// get distance from another vector
 	distance_from: function (other)
 	{
@@ -38,6 +58,29 @@ SSCD.Vector.prototype = {
 	angle_from: function (other)
 	{
 		return SSCD.Math.angle(this, other);
+	},
+	
+	// move the position of this vector (same as add_self)
+	move: function(vector)
+	{
+		this.x += vector.x;
+		this.y += vector.y;
+		return this;
+	},
+	
+	// normalize this vector
+	normalize_self: function()
+	{
+		var by = Math.sqrt(this.x * this.x + this.y * this.y);
+		this.x /= by;
+		this.y /= by;
+		return this;
+	},
+		
+	// return normalized copy (don't change self)
+	normalize: function()
+	{
+		return this.clone().normalize_self();
 	},
 	
 	// add vector to self

@@ -45,18 +45,33 @@ SSCD.CompositeShape.prototype = {
 		{
 			this.__shapes[i].shape.render(ctx, camera_pos);
 		}
-		
-		// now render bounding-box to mark their group boundaries
-		var box = this.get_aabb();
-				
-		// draw the rect
-		ctx.beginPath();
-		ctx.rect(box.position.x - camera_pos.x, box.position.y - camera_pos.y, box.size.x, box.size.y);
-		
-		// draw stroke
-		ctx.lineWidth = "1";
-		ctx.strokeStyle = 'rgba(150, 75, 45, 0.5)';
-		ctx.stroke();
+	},
+	
+	// repeal an object from this object.
+	// here we iterate over sub-object and repeal only from the ones we collide with
+	repel: function(obj, force, iterations)
+	{
+		var ret = SSCD.Vector.ZERO.clone();
+		for (var i = 0; i < this.__shapes.length; ++i)
+		{
+			var shape = this.__shapes[i].shape;
+			if (shape.test_collide_with(obj))
+			{
+				ret.add_self(shape.repel(obj, force, iterations));
+			}
+		}
+		return ret;
+	},
+	
+	// set colors to override the debug rendering colors
+	set_debug_render_colors: function(fill_color, stroke_color)
+	{
+		this.__override_fill_color = fill_color;
+		this.__override_stroke_color = stroke_color;
+		for (var i = 0; i < this.__shapes.length; ++i)
+		{
+			this.__shapes[i].shape.set_debug_render_colors(fill_color, stroke_color);
+		}
 	},
 	
 	// get shapes list
@@ -86,6 +101,7 @@ SSCD.CompositeShape.prototype = {
 		// if no shapes return zero aabb
 		if (this.__shapes.length === 0)
 		{
+			this.__aabb_pos_offset_c = SSCD.Vector.ZERO;
 			return new SSCD.AABB(SSCD.Vector.ZERO, SSCD.Vector.ZERO);
 		}
 		
@@ -103,7 +119,18 @@ SSCD.CompositeShape.prototype = {
 				ret = curr_aabb;
 			}
 		}
+		
+		// store diff between position and bounding-box position, for faster aabb movement
+		this.__aabb_pos_offset_c = ret.position.sub(this.__position);
+		
+		// return bounding-box
 		return ret;
+	},
+	
+	// called to update axis-aligned-bounding-box position
+	__update_aabb_pos: function()
+	{
+		this.__aabb.position = this.__position.add(this.__aabb_pos_offset_c);
 	},
 	
 	// add shape to the composite shape
@@ -133,6 +160,10 @@ SSCD.CompositeShape.prototype = {
 		// set shape tags to be the composite shape tags
 		shape.__collision_tags_val = this.__collision_tags_val;
 		shape.__collision_tags = this.__collision_tags;
+		
+		// set shape debug colors
+		shape.__override_fill_color = this.__override_fill_color;
+		shape.__override_stroke_color = this.__override_stroke_color;
 		
 		// return the newly added shape
 		return shape;

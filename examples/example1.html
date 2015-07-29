@@ -6,14 +6,16 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
 	<title>SSCD</title>
 
-	<script src="../dist/sscd.1.0.min.js"></script>
+	<script src="../dist/sscd.1.1.min.js"></script>
 	
 </head>
 
 <body style="padding:0; margin:0; overflow: hidden;">
 
-	<!-- main canvas we render and create comic on -->
+	<!-- main canvas we render on -->
 	<canvas id="mainCanvas" class="main" width="1280" height="1024" style="padding:0; margin:0; z-index:1000; position:fixed;"></canvas>
+	
+	<!-- example info -->
 	<div style="position:fixed; z-index: 1000">
 		<h1 style="position:fixed; left:10px; top:10px; color:#555;">SSCD Example I</h1>
 		<p style="position:fixed; left:10px; top:60px; color:#555; font-size:160%">
@@ -21,8 +23,11 @@
 		Click on a shape to pick it up, and click again to drop it. <br /> <br />
 		At the panel below you will see which shapes currently collide with the shape you are currently dragging.
 		</p>
+		
+		<!-- bottom panel to show info -->
 		<input id="text-panel" style="position:fixed; left: 0px; padding-left: 10px; bottom: 10px; z-index: 1000; font-size: 160%; width: 100%" value="" readonly></input>
 	</div>
+	
 	<script>
 	
 		// get canvas and 2d context
@@ -65,7 +70,7 @@
 									[new SSCD.Vector(100, 0), new SSCD.Vector(0, 100), new SSCD.Vector(100, 100)], true));
 		world.add(new SSCD.LineStrip(new SSCD.Vector(720, 300), 
 									[new SSCD.Vector(100, 0), new SSCD.Vector(0, 100), new SSCD.Vector(100, 100), new SSCD.Vector(20, -50)], false));						
-		var comp = world.add(new SSCD.CompositeShape()).set_position(new SSCD.Vector(950, 320));
+		var comp = world.add(new SSCD.CompositeShape(new SSCD.Vector(950, 320)));
 		comp.add(new SSCD.Circle(new SSCD.Vector(0, 0), 100));
 		comp.add(new SSCD.Circle(new SSCD.Vector(70, 0), 60));
 		comp.add(new SSCD.Rectangle(new SSCD.Vector(0, 80), new SSCD.Vector(90, 90)));

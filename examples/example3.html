@@ -6,14 +6,16 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
 	<title>SSCD</title>
 
-	<script src="../dist/sscd.1.0.min.js"></script>
+	<script src="../dist/sscd.1.1.min.js"></script>
 	
 </head>
 
 <body style="padding:0; margin:0; overflow: hidden;">
 
-	<!-- main canvas we render and create comic on -->
+	<!-- main canvas we render on -->
 	<canvas id="mainCanvas" class="main" width="1280" height="1024" style="padding:0; margin:0; z-index:1000; position:fixed;"></canvas>
+	
+	<!-- example info -->
 	<div style="position:fixed; z-index: 1000">
 		<h1 style="position:fixed; left:10px; top:10px; color:#555;">SSCD Example III</h1>
 		<p style="position:fixed; left:10px; top:60px; color:#555; font-size:120%">
@@ -22,12 +24,17 @@
 		At the panel below you will see which shapes currently collide with the shape you are currently dragging. <br />
 		<b>Shapes will only collide with other shapes that have the same tags! shapes with the same tags are marked with the same color.</b>
 		</p>
+		
+		<!-- show shapes tags -->
 		<p style="position:fixed; left:150px; top:220px; color:#555; font-size:120%"><b>AIR</b></p>
 		<p style="position:fixed; left:500px; top:220px; color:#555; font-size:120%"><b>WATER</b></p>
 		<p style="position:fixed; left:750px; top:220px; color:#555; font-size:120%"><b>FIRE</b></p>
 		<p style="position:fixed; left:890px; top:220px; color:#555; font-size:120%"><b>ALL ELEMENTS</b></p>
+		
+		<!-- bottom panel to show info -->
 		<input id="text-panel" style="position:fixed; left: 0px; padding-left: 10px; bottom: 10px; z-index: 1000; font-size: 160%; width: 100%" value="" readonly></input>
 	</div>
+	
 	<script>
 	
 		// get canvas and 2d context

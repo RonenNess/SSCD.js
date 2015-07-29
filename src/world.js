@@ -8,7 +8,7 @@
 var SSCD = SSCD || {};
 
 // version identifier
-SSCD.VERSION = 1.0;
+SSCD.VERSION = 1.1;
 
 // a collision world. you create an instance of this class and add bodies to it to check collision.
 //
@@ -407,11 +407,16 @@ SSCD.World.prototype = {
 	// canvas: a 2d canvas object to render on.
 	// camera_pos: optional, vector that represent the current camera position is 2d space.
 	// show_grid: default to true, if set will render background grid that shows which grid chunks are currently active
+	// show_aabb: default to true, if set will render objects axis-aligned bounding boxes
 	// NOTE: this function will NOT clear canvas before rendering, if you render within a main loop its your responsibility.
-	render: function (canvas, camera_pos, show_grid)
+	render: function (canvas, camera_pos, show_grid, show_aabb)
 	{
 		// set default camera pos if doesn't exist
 		camera_pos = camera_pos || SSCD.Vector.ZERO;
+		
+		// set default show_grid and show_aabb
+		if (show_grid === undefined) {show_grid = true;}
+		if (show_aabb === undefined) {show_aabb = true;}
 		
 		// get ctx and reset previous transformations
 		var ctx = canvas.getContext('2d');
@@ -444,20 +449,22 @@ SSCD.World.prototype = {
 				}
 								
 				// render current grid chunk
-				var position = new SSCD.Vector(i * grid_size, j * grid_size).sub_self(camera_pos);
-				ctx.beginPath();
-				ctx.rect(position.x, position.y, grid_size-1, grid_size-1);
-				ctx.lineWidth = "1";
-				if ((curr_grid_chunk === undefined) || (curr_grid_chunk.length === 0))
+				if (show_grid)
 				{
-					ctx.strokeStyle = 'rgba(100, 100, 100, 0.255)';
+					var position = new SSCD.Vector(i * grid_size, j * grid_size).sub_self(camera_pos);
+					ctx.beginPath();
+					ctx.rect(position.x, position.y, grid_size-1, grid_size-1);
+					ctx.lineWidth = "1";
+					if ((curr_grid_chunk === undefined) || (curr_grid_chunk.length === 0))
+					{
+						ctx.strokeStyle = 'rgba(100, 100, 100, 0.255)';
+					}
+					else
+					{
+						ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+					}
+					ctx.stroke();
 				}
-				else
-				{
-					ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
-				}
-				ctx.stroke();
-				
 				
 				// if current grid chunk has no objects skip
 				if (curr_grid_chunk === undefined)
@@ -481,6 +488,10 @@ SSCD.World.prototype = {
 		for (var i = 0; i < render_list.length; ++i)
 		{
 			render_list[i].render(ctx, camera_pos);
+			if (show_aabb)
+			{
+				render_list[i].render_aabb(ctx, camera_pos);
+			}
 		}
 	},
 };

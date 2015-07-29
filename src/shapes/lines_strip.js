@@ -44,7 +44,7 @@ SSCD.LineStrip.prototype = {
 	render: function (ctx, camera_pos)
 	{
 		// apply camera on position
-		var position = this.get_position().sub(camera_pos);
+		var position = this.__position.sub(camera_pos);
 					
 		// draw the lines
 		ctx.beginPath();
@@ -64,18 +64,6 @@ SSCD.LineStrip.prototype = {
 		// draw stroke
 		ctx.lineWidth = "7";
 		ctx.strokeStyle = this.__get_render_stroke_color(0.75);
-		ctx.stroke();
-		
-		// now render bounding-box
-		var box = this.get_aabb();
-				
-		// draw the rect
-		ctx.beginPath();
-		ctx.rect(box.position.x - camera_pos.x, box.position.y - camera_pos.y, box.size.x, box.size.y);
-		
-		// draw stroke
-		ctx.lineWidth = "1";
-		ctx.strokeStyle = 'rgba(50, 175, 45, 0.5)';
 		ctx.stroke();
 		
 	},
@@ -131,6 +119,12 @@ SSCD.LineStrip.prototype = {
 		this.__abs_lines_c = undefined;
 	},
 	
+	// called to update axis-aligned-bounding-box position
+	__update_aabb_pos: function()
+	{
+		this.__aabb.position.set(this.__aabb_offset_c.add(this.__position));
+	},
+	
 	// return axis-aligned-bounding-box
 	build_aabb: function ()
 	{
@@ -139,6 +133,7 @@ SSCD.LineStrip.prototype = {
 		{
 			ret.add_vector(this.__points[i]);
 		}
+		this.__aabb_offset_c = ret.position.clone();
 		ret.position.add_self(this.__position);
 		return ret;
 	},

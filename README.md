@@ -254,6 +254,30 @@ That's it. You can use any string as tag and they don't need any special initial
 All new shapes are tagged as everything by default, and all collision tests will accept any tag unless stated otherwise.
 Note however that you are limited to only *32 different tags. (*can be more on some OS and browsers, but 32 is a safe number that should work for all machines).
 
+### Resolve penetration
+
+While resolving penetration is a little bit outside SSCD scope, the framework does provide a helper function to get you started.
+Every shape has a repel() function that will repel/push an object outside of the center of the shape.
+
+Here's a quick example of how you can use it to resolve penetration, assuming player_shape is the shape representing player collision:
+
+```javascript
+// pick object player collide with
+var collide_with = world.pick_object(player_shape);
+
+// if object found, use repel to prevent penetration
+if (collide_with)
+{
+	collide_with.repel(player_shape, 1, 1);
+	
+	// here we will set the position of the player sprite to match its collision body..
+}
+```
+
+As you can see repel() is very simple. First param is which shape or vector to push outside, second param is pushing force, and last param is how many iterations of repel to run, while every iteration we check and if no longer collide we stop pushing.
+
+Note that while this method is good enough to get you started, for a serious game you'd probably want to implement a better penetration resolving algorithm.
+
 ### Memory usage
 
 SSCD is very memory-efficient, and should not pose any problems.
@@ -265,6 +289,18 @@ If this insignificant memory waste really bother you, you can tell the collision
 ```javascript
 world.cleanup();
 ```
+
+## Changelog
+
+### 1.1
+
+- Added repel() to shapes.
+- Improved some performance, especially with moving objects aabb calculations.
+- Fixed debug coloring bug with composite shapes.
+- Added another example with resolving penetration.
+- Extended Vectors API.
+- Added render bounding-box functionality to all shapes.
+- Fixed world render function to accept if should render grid and bounding boxes.
 	
 ## License
 SSCD is provided under the zlib-license, and is absolutely free for use for educational & commercial purposes.

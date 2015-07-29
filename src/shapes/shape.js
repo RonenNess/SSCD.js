@@ -122,6 +122,66 @@ SSCD.Shape.prototype = {
 		return SSCD.CollisionManager.test_collision(this, obj);
 	},
 	
+	// repeal an object from this object.
+	// this means, in simple words, we push the other object outside to prevent penetration.
+	// this works in a very simply way - it iterates and push the penetrating object outside from center until its no longer collided.
+	// obj: object or vector to repeal (must have move() function).
+	// force: force factor, the bigger this is the stronger / faster the repealing will be. default to 1.
+	// iterations: max iterations of repeal-and-test-again routines. default to 1.
+	// NOTE: this function assume there's collision on start, meaning first iteration of repeal will ALWAYS happen.
+	// return: total movement due to repeling (vector)
+	repel: function(obj, force, iterations)
+	{
+		// set defaults
+		force = force || 1;
+		iterations = iterations || 1;
+		
+		// get direction vector
+		var push_vector = this.get_repel_direction(obj).multiply_scalar_self(force);
+		
+		// for return value
+		var ret = SSCD.Vector.ZERO.clone();
+		
+		// now do the repeling
+		var collide = true;
+		while (collide && iterations > 0)
+		{
+			// decreate iterations count
+			iterations--;
+			
+			// do pushing
+			obj.move(push_vector);
+			ret.add_self(push_vector);
+			
+			// check if still colliding
+			collide = this.test_collide_with(obj);
+		}
+		
+		// return total pushed
+		return ret;
+	},
+	
+	// get repel direction between this shape and another shape / vector
+	get_repel_direction: function(obj)
+	{
+		// get the center of this object
+		var center = this.get_abs_center();
+		
+		// get center of other object / vector
+		var other_center;
+		if (obj instanceof SSCD.Vector)
+		{
+			var other_center = obj;
+		}
+		else
+		{
+			other_center = obj.get_abs_center();
+		}
+		
+		// return repel direction vector
+		return other_center.sub(center).normalize_self();
+	},
+	
 	// return shape fill color for debug rendering
 	__get_render_fill_color: function (opacity)
 	{
@@ -189,6 +249,21 @@ SSCD.Shape.prototype = {
 		return this.__type;
 	},
 	
+	// render shape axis-aligned-bounding-box
+	render_aabb: function(ctx, camera_pos)
+	{
+		var box = this.get_aabb();
+				
+		// draw the rect
+		ctx.beginPath();
+		ctx.rect(box.position.x - camera_pos.x, box.position.y - camera_pos.y, box.size.x, box.size.y);
+		
+		// draw stroke
+		ctx.lineWidth = "1";
+		ctx.strokeStyle = 'rgba(50, 175, 45, 0.5)';
+		ctx.stroke();
+	},
+	
 	// set position
 	set_position: function (vector)
 	{
@@ -207,7 +282,7 @@ SSCD.Shape.prototype = {
 	// move the shape
 	move: function (vector)
 	{
-		this.set_position(this.get_position().add_self(vector));
+		this.set_position(this.__position.add(vector));
 		return this;
 	},
 	
@@ -221,10 +296,28 @@ SSCD.Shape.prototype = {
 		}
 		
 		// remove bounding box cache
-		this.reset_aabb();
+		if (this.__aabb)
+		{
+			this.__update_aabb_pos();
+		}
 		
 		// update in world
 		this.__update_parent_world();
+	},
+	
+	// called to update axis-aligned-bounding-box position
+	// this function called AFTER the position update, meaning new position applied
+	// this function only called if have aabb in cache.
+	__update_aabb_pos: function()
+	{
+		this.__aabb.position = this.__position;
+	},
+	
+	// return the absolute center of the shape
+	get_abs_center: function()
+	{
+		var aabb = this.get_aabb();
+		return aabb.position.add(aabb.size.multiply_scalar(0.5));
 	},
 	
 	// reset bounding box

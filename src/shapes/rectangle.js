@@ -31,7 +31,7 @@ SSCD.Rectangle.prototype = {
 	render: function (ctx, camera_pos)
 	{
 		// apply camera on position
-		var position = this.get_position().sub(camera_pos);
+		var position = this.__position.sub(camera_pos);
 					
 		// draw the rect
 		ctx.beginPath();
