@@ -274,7 +274,7 @@ if (collide_with)
 }
 ```
 
-As you can see repel() is very simple. First param is which shape or vector to push outside, second param is pushing force, and last param is how many iterations of repel to run, while every iteration we check and if no longer collide we stop pushing.
+As you can see repel() is very simple. First param is which shape or vector to push outside, second param is pushing force, and last param is how many iterations of repel to run, while in every iteration we check if shapes still collide and push if they do.
 
 Note that while this method is good enough to get you started, for a serious game you'd probably want to implement a better penetration resolving algorithm.
 
