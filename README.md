@@ -301,6 +301,14 @@ world.cleanup();
 - Extended Vectors API.
 - Added render bounding-box functionality to all shapes.
 - Fixed world render function to accept if should render grid and bounding boxes.
+
+### 1.2
+
+- Fixed ret_obj_count param that was mistakenly ignored before. This should make pick_object a lot more faster.
+- Added grid_error optimization (good for moving lots of large objects by small steps).
+- Added performance examples.
+
+Note: building this version before attempting to become npm compliance.
 	
 ## License
 SSCD is provided under the zlib-license, and is absolutely free for use for educational & commercial purposes.

@@ -33,12 +33,12 @@ for file in [
         full_code += src.read() + "\r\n\r\n"
 
 # write full version
-dest = open('dist/sscd.dev.js', 'w')
+dest = open('dist/dev/sscd.dev.js', 'w')
 dest.write(full_code)
 dest.close()
 
 # minify and write minified version
-dest = open('dist/sscd.dev.min.js', 'w')
+dest = open('dist/dev/sscd.dev.min.js', 'w')
 minified = minifiy_js(full_code)
 dest.write(minified)
 dest.close()
