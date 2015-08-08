@@ -47,14 +47,18 @@ SSCD.VERSION = 1.1;
 //								you can increase this number to make moving objects more efficient for the price of sometimes
 //								less accurate collision around the edges. set to 0 if you want to always update grid (useful if all your moving objects move fast)
 SSCD.World = function (params) {
+	
 	// set defaults
 	params = params || {};
 	params.grid_size = params.grid_size || 512;
 	params.grid_error = params.grid_error !== undefined ? params.grid_error : 2;
 
 	// create grid and set params
-	this.__bodies = {};
+	this.__grid = {};
 	this.__params = params;
+	
+	// all the shapes currently in this world
+	this.__all_shapes = {};
 
 	// create the empty collision flags dictionary
 	this.__collision_tags = {};
@@ -84,28 +88,28 @@ SSCD.World.prototype = {
 	cleanup: function()
 	{
 		// iterate over grid rows
-		var rows = Object.keys(this.__bodies);
+		var rows = Object.keys(this.__grid);
 		for (var _i = 0; _i < rows.length; ++_i)
 		{
 			var i = rows[_i];
 			
 			// iterate over grid columns in current row:
-			var columns = Object.keys(this.__bodies[i]);
+			var columns = Object.keys(this.__grid[i]);
 			for (var _j = 0; _j < columns.length; ++_j)
 			{
 				var j = columns[_j];
 				
 				// if empty grid chunk delete it
-				if (this.__bodies[i][j].length === 0)
+				if (this.__grid[i][j].length === 0)
 				{
-					delete this.__bodies[i][j];
+					delete this.__grid[i][j];
 				}
 			}
 			
 			// if no more columns are left in current row delete the row itself
-			if (Object.keys(this.__bodies[i]).length === 0)
+			if (Object.keys(this.__grid[i]).length === 0)
 			{
-				delete this.__bodies[i];
+				delete this.__grid[i];
 			}
 		}
 	},
@@ -182,11 +186,11 @@ SSCD.World.prototype = {
 			for (var j = grids.min_y; j <= grids.max_y; ++j)
 			{
 				// make sure lists exist
-				this.__bodies[i] = this.__bodies[i] || {};
-				this.__bodies[i][j] = this.__bodies[i][j] || [];
+				this.__grid[i] = this.__grid[i] || {};
+				this.__grid[i][j] = this.__grid[i][j] || [];
 				
 				// get current grid chunk
-				var curr_grid_chunk = this.__bodies[i][j];
+				var curr_grid_chunk = this.__grid[i][j];
 				
 				// add object to grid chunk
 				curr_grid_chunk.push(obj);
@@ -201,8 +205,25 @@ SSCD.World.prototype = {
 		obj.__grid_bounderies = grids;
 		obj.__last_insert_aabb = obj.get_aabb().clone();
 		
+		// add to list of all shapes
+		this.__all_shapes[obj.get_id()] = obj;
+		
 		// return the newly added object
 		return obj;
+	},
+	
+	// return all shapes in world
+	get_all_shapes: function()
+	{
+		var ret = [];
+		for (var key in this.__all_shapes)
+		{
+			if (this.__all_shapes.hasOwnProperty(key))
+			{
+				ret.push(this.__all_shapes[key]);
+			}
+		}
+		return ret;
 	},
 	
 	// remove object from world
@@ -230,6 +251,9 @@ SSCD.World.prototype = {
 				}
 			}
 		}
+		
+		// remove from list of all shapes
+		delete this.__all_shapes[obj.get_id()];
 		
 		// clear shape world chunks and world pointer
 		obj.__grid_chunks = [];
@@ -303,13 +327,13 @@ SSCD.World.prototype = {
 		var j = Math.floor((vector.y) / grid_size);
 		
 		// if grid chunk is not in use return empty list
-		if (this.__bodies[i] === undefined || this.__bodies[i][j] === undefined)
+		if (this.__grid[i] === undefined || this.__grid[i][j] === undefined)
 		{
 			return false;
 		}
 		
 		// get current grid chunk
-		var grid_chunk = this.__bodies[i][j];
+		var grid_chunk = this.__grid[i][j];
 		
 		// iterate over all objects in current grid chunk and add them to render list
 		var found = 0;
@@ -375,7 +399,7 @@ SSCD.World.prototype = {
 		for (var i = grid.min_x; i <= grid.max_x; ++i)
 		{
 			// skip empty rows
-			if (this.__bodies[i] === undefined)
+			if (this.__grid[i] === undefined)
 			{
 				continue;
 			}
@@ -383,7 +407,7 @@ SSCD.World.prototype = {
 			// iterate on current grid row
 			for (var j = grid.min_y; j <= grid.max_y; ++j)
 			{
-				var curr_grid_chunk = this.__bodies[i][j];
+				var curr_grid_chunk = this.__grid[i][j];
 				
 				// skip empty grid chunks
 				if (curr_grid_chunk === undefined)
@@ -491,9 +515,9 @@ SSCD.World.prototype = {
 			{
 				// get current grid chunk
 				var curr_grid_chunk = undefined;
-				if (this.__bodies[i])
+				if (this.__grid[i])
 				{
-					var curr_grid_chunk = this.__bodies[i][j];
+					var curr_grid_chunk = this.__grid[i][j];
 				}
 								
 				// render current grid chunk

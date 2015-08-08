@@ -1,0 +1,155 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<title>SSCD</title>
+
+	<script src="../dist/sscd.dev.js"></script>
+	
+</head>
+
+<body style="padding:0; margin:0; overflow: hidden;">
+
+	<!-- main canvas we render on -->
+	<canvas id="mainCanvas" class="main" width="1280" height="1024" style="padding:0; margin:0; z-index:1000; position:fixed;"></canvas>
+	
+	<!-- example info -->
+	<div style="position:fixed; z-index: 1000">
+		<h1 style="position:fixed; left:10px; top:10px; color:#555;">SSCD Performance Test II</h1>
+		<p style="position:fixed; left:10px; top:60px; color:#555; font-size:160%">
+		In this example we see test collision speed with a world packed with objects, while everything is moving around. Many moving objects = lots of collision grid updates, which is important to test. <br />
+		As you move to the right there are more objects piled together, so collision will be tested against more objects. <br />
+		Note: The slowest part about this example is actually the debug rendering, but we don't render every frame. anyway, rendering time is not included in the time calculation.
+		</p>
+		
+		<!-- bottom panel to show info -->
+		<input id="text-panel" style="position:fixed; left: 0px; padding-left: 10px; bottom: 10px; z-index: 1000; font-size: 160%; width: 100%" value="" readonly></input>
+	</div>
+	
+	<script>
+	
+		// get canvas and 2d context
+		var canvas = document.getElementById("mainCanvas");
+		var ctx = canvas.getContext('2d');
+	
+		// create a collision world with grid size of 150
+		var world = new SSCD.World({grid_size: 150, grid_error: 2});
+	
+		// resize canvas to fit fullscreen
+		function resizeCanvas() {
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+			
+			// clear canvas and re-render on page resize
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			world.render(canvas);
+		}
+		window.addEventListener('resize', resizeCanvas, false);
+		resizeCanvas();
+	
+		// keep track on mouse position
+		var mouse_pos = new SSCD.Vector(0, 0);
+		document.onmousemove = function (e) {
+		
+			// get new mouse position
+			var new_mouse_pos = new SSCD.Vector(e.pageX, e.pageY);
+			
+			// set mouse position
+			mouse_pos = new_mouse_pos;
+		}
+		
+		// add some helper functions to world manager for performance tests
+		world.__do_collision = function(src, target)
+		{
+			this.__coll_test_counter++;
+			return src.test_collide_with(target);
+		};
+		
+		// add test objects to world
+		for (var i = 0; i < 15; ++i)
+		{
+			for (var j = 0; j < 15; ++j)
+			{
+				var x = -580 + i * 200;
+				var y = -250 + j * 200 / (1 + i / 4);
+				world.add(new SSCD.Circle(new SSCD.Vector(100 + x, 380 + y), 25));
+				world.add(new SSCD.Rectangle(new SSCD.Vector(210 + x, 300 + y), new SSCD.Vector(40, 40)));
+				world.add(new SSCD.Line(new SSCD.Vector(450 + x, 300 + y), new SSCD.Vector(40, 40)));
+				world.add(new SSCD.LineStrip(new SSCD.Vector(580 + x, 300 + y), 
+											[new SSCD.Vector(40, 0), new SSCD.Vector(0, 40), new SSCD.Vector(40, 40)], true));
+				world.add(new SSCD.LineStrip(new SSCD.Vector(720 + x, 300 + y), 
+											[new SSCD.Vector(40, 0), new SSCD.Vector(0, 40), new SSCD.Vector(40, 40), new SSCD.Vector(20, -40)], false));						
+				var comp = world.add(new SSCD.CompositeShape(new SSCD.Vector(950 + x, 320 + y)));
+				comp.add(new SSCD.Circle(new SSCD.Vector(0, 0), 25));
+				comp.add(new SSCD.Circle(new SSCD.Vector(70, 0), 25));
+				comp.add(new SSCD.Rectangle(new SSCD.Vector(0, 80), new SSCD.Vector(25, 25)));
+			}
+		}
+		
+		// get the bottom text panel to interact with the user
+		var text_panel = document.getElementById("text-panel");
+
+		// render world (don't render every frame since nothing moves)
+		world.render(canvas);
+					
+		// get a list with all shapes in world
+		var shapes = world.get_all_shapes();
+		
+		// so we won't render every frame
+		var frames_until_render = 0;
+		var frames_count = 0;
+		
+		// main loop that will render objects
+		function main_loop()
+		{
+			// redraw world
+			if (frames_until_render <= 0)
+			{
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				world.render(canvas);
+				frames_until_render = 4;
+			}
+			frames_until_render--;
+			
+			// increase frames count
+			frames_count++;
+			
+			// zero collision tests count
+			world.__coll_test_counter = 0;
+			
+			// get starting time
+			var t0 = performance.now();
+			
+			// move all shapes
+			var move_vec = new SSCD.Vector(Math.sin(frames_count / 100.0) * 5, Math.cos(frames_count / 100.0) * 5);
+			for (var i  = 0; i < shapes.length; ++i)
+			{
+				var curr = shapes[i];
+				curr.move(move_vec);
+			}
+			
+			// try to pick object
+			var out_list = [];
+			world.test_collision(mouse_pos, undefined, out_list);
+			
+			// get ending time
+			var t1 = performance.now();
+			text_panel.value = "collision test + moving " + shapes.length + " objects took " + (t1 - t0).toFixed(6) + " milliseconds, tested: " + world.__coll_test_counter + " objects.";
+			
+			// delete previous out list
+			delete out_list;
+			out_list = null;
+			
+			// call next iteration
+			setTimeout(main_loop, 1);
+		}
+		main_loop();
+		
+	</script>
+
+</body>
+
+</html>
+
