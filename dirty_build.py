@@ -2,9 +2,18 @@
 
 import os
 import sys
+import requests
 
-dest = open('dist/sscd.dev.js', 'w')
+def minifiy_js(code):
+    '''
+    minify and return javascript code
+    '''
+    r = requests.post("http://javascript-minifier.com/raw", data={'input': code})
+    r.raise_for_status()
+    return r.text
 
+# combine all code into a single file
+full_code = ""
 for file in [
         "license.js",
         "world.js",
@@ -20,6 +29,16 @@ for file in [
 	"shapes/composite_shape.js",
 	"shapes/shapes_collider.js"]:
     with open(os.path.join("src", file), 'r') as src:
-        dest.write("// FILE: " + file + "\r\n\r\n")
-        dest.write(src.read() + "\r\n\r\n")
-    
+        full_code += "// FILE: " + file + "\r\n\r\n"
+        full_code += src.read() + "\r\n\r\n"
+
+# write full version
+dest = open('dist/sscd.dev.js', 'w')
+dest.write(full_code)
+dest.close()
+
+# minify and write minified version
+dest = open('dist/sscd.dev.min.js', 'w')
+minified = minifiy_js(full_code)
+dest.write(minified)
+dest.close()
