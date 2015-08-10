@@ -41,21 +41,15 @@ SSCD should work on all modern browsers, and its tested and confirmed on Chrome,
 
 ## How to use
 
-First get the latest version of SSCD from dist/ folder in this git, and include it to your html header like this:
+If you are using node.js, first install from npm:
 
-```html
-<script src="sscd.1.0.min.js"></script>
+    npm install sscd
+
+Then require sscd like this:
+
+```javascript
+    var SSCD = require('sscd').sscd;
 ```
-
-Or
-
-```html
-<script src="sscd.1.0.js"></script>
-```
-
-For un-minified version.
-
-Now all you have to do is create a collision world, add some shapes to it, and test collisions.
 
 ### Quick example
 
