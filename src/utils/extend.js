@@ -40,12 +40,12 @@ SSCD.extend = function (base, child)
 			this.__curr_init_func();
 		}
 		delete this.__curr_init_func;
-	}
-}
+	};
+};
 
 // for not-implemented exceptions
 SSCD.NotImplementedError = function (message) {
     this.name = "NotImplementedError";
     this.message = (message || "");
-}
+};
 SSCD.NotImplementedError.prototype = Error.prototype;

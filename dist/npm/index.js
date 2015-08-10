@@ -378,17 +378,15 @@ SSCD.World.prototype = {
 	// see test_collision comment for more info
 	__test_collision_shape: function (obj, collision_tags_val, out_list, ret_objs_count)
 	{
-		var grid;
-		
 		// if shape is in this world, use its grid range from cache
 		if (obj.__world === this)
 		{
-			grid = obj.__grid_bounderies;
+			var grid = obj.__grid_bounderies;
 		}
 		// if not in world, generate grid range
 		else
 		{
-			grid = this.__get_grid_range(obj);
+			var grid = this.__get_grid_range(obj);
 		}
 		
 		// for return value
@@ -519,7 +517,7 @@ SSCD.World.prototype = {
 				var curr_grid_chunk = undefined;
 				if (this.__grid[i])
 				{
-					curr_grid_chunk = this.__grid[i][j];
+					var curr_grid_chunk = this.__grid[i][j];
 				}
 								
 				// render current grid chunk
@@ -575,7 +573,7 @@ SSCD.World.prototype = {
 SSCD.IllegalActionError = function (message) {
     this.name = "Illegal Action";
     this.message = (message || "");
-};
+}
 SSCD.IllegalActionError.prototype = Error.prototype;
 
 
@@ -915,7 +913,7 @@ SSCD.Vector.RIGHT = new SSCD.Vector(1, 0);
 SSCD.Vector.UP_LEFT = new SSCD.Vector(-1, -1);
 SSCD.Vector.DOWN_LEFT = new SSCD.Vector(-1, 1);
 SSCD.Vector.UP_RIGHT = new SSCD.Vector(1, -1);
-SSCD.Vector.DOWN_RIGHT = new SSCD.Vector(1, 1);
+SSCD.Vector.DOWN_RIGHT = new SSCD.Vector(1, 1)
 
 // FILE: utils/extend.js
 
@@ -961,14 +959,14 @@ SSCD.extend = function (base, child)
 			this.__curr_init_func();
 		}
 		delete this.__curr_init_func;
-	};
-};
+	}
+}
 
 // for not-implemented exceptions
 SSCD.NotImplementedError = function (message) {
     this.name = "NotImplementedError";
     this.message = (message || "");
-};
+}
 SSCD.NotImplementedError.prototype = Error.prototype;
 
 // FILE: utils/aabb.js
@@ -1226,7 +1224,7 @@ SSCD.Shape.prototype = {
 		var other_center;
 		if (obj instanceof SSCD.Vector)
 		{
-			other_center = obj;
+			var other_center = obj;
 		}
 		else
 		{
@@ -1476,7 +1474,7 @@ SSCD.Circle.prototype = {
 	// called to update axis-aligned-bounding-box position
 	__update_aabb_pos: function()
 	{
-		this.__aabb.position = this.__position.sub_scalar(this.__radius);
+		this.__aabb.position = this.__position.sub_scalar(this.__radius)
 	},
 	
 	// return axis-aligned-bounding-box
@@ -1647,6 +1645,8 @@ SSCD.Line.prototype = {
 	// render (for debug purposes)
 	render: function (ctx, camera_pos)
 	{
+		// apply camera on position
+		var position = this.__position.sub(camera_pos);
 					
 		// draw the line
 		ctx.beginPath();
@@ -1746,21 +1746,22 @@ SSCD.LineStrip.prototype = {
 	// render (for debug purposes)
 	render: function (ctx, camera_pos)
 	{
+		// apply camera on position
+		var position = this.__position.sub(camera_pos);
 					
 		// draw the lines
-		var to = undefined;
 		ctx.beginPath();
 		for (var i = 0; i < this.__points.length-1; ++i)
 		{
 			var from = this.__position.add(this.__points[i]);
-			to = this.__position.add(this.__points[i+1]);
+			var to = this.__position.add(this.__points[i+1]);
 			ctx.moveTo(from.x, from.y);
 			ctx.lineTo(to.x, to.y);
 		}
 		
 		// add last point
 		ctx.moveTo(to.x, to.y);
-		to = this.__position.add(this.__points[this.__points.length-1]);
+		var to = this.__position.add(this.__points[this.__points.length-1]);
 		ctx.lineTo(to.x, to.y);
 		
 		// draw stroke
@@ -2169,7 +2170,7 @@ SSCD.CollisionManager = {
 		// line-strip with line-strip collision
 		if (a instanceof SSCD.LineStrip && b instanceof SSCD.LineStrip)
 		{
-			return this._test_collision_linestrip_linestrip(a, b);
+			return this._test_collision_linestrip_linestrip(a, b)
 		}
 
 		// rect-line collision
@@ -2493,6 +2494,11 @@ SSCD.CollisionManager = {
 			return true;
 		}
 		
+		var r1 = rect.get_top_left();
+		var r2 = rect.get_bottom_left();
+		var r3 = rect.get_top_right();
+		var r4 = rect.get_bottom_right();
+		
 		// create a list of lines to check (in the rectangle) based on circle position to rect center
 		var lines = [];
 		if (rect_center.x > circle_pos.x)
@@ -2544,20 +2550,8 @@ SSCD.CollisionManager = {
 SSCD.UnsupportedShapes = function (a, b) {
     this.name = "Unsupported Shapes";
     this.message = "Unsupported shapes collision test! '" + a.get_name() + "' <-> '" + b.get_name() + "'.";
-};
+}
 SSCD.UnsupportedShapes.prototype = Error.prototype;
 
 
-
-// FILE: packages/npm.js
-
-/*
-* This file is just to make this package npm compliant.
-* Author: Ronen Ness, 2015
-*/
-
-if (typeof exports !== "undefined")
-{
-	exports.sscd = SSCD;
-}
 

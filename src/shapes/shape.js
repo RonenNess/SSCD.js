@@ -172,7 +172,7 @@ SSCD.Shape.prototype = {
 		var other_center;
 		if (obj instanceof SSCD.Vector)
 		{
-			var other_center = obj;
+			other_center = obj;
 		}
 		else
 		{

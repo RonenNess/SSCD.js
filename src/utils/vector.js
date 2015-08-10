@@ -243,4 +243,4 @@ SSCD.Vector.RIGHT = new SSCD.Vector(1, 0);
 SSCD.Vector.UP_LEFT = new SSCD.Vector(-1, -1);
 SSCD.Vector.DOWN_LEFT = new SSCD.Vector(-1, 1);
 SSCD.Vector.UP_RIGHT = new SSCD.Vector(1, -1);
-SSCD.Vector.DOWN_RIGHT = new SSCD.Vector(1, 1)
+SSCD.Vector.DOWN_RIGHT = new SSCD.Vector(1, 1);

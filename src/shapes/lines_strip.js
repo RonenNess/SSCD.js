@@ -43,22 +43,21 @@ SSCD.LineStrip.prototype = {
 	// render (for debug purposes)
 	render: function (ctx, camera_pos)
 	{
-		// apply camera on position
-		var position = this.__position.sub(camera_pos);
 					
 		// draw the lines
+		var to = undefined;
 		ctx.beginPath();
 		for (var i = 0; i < this.__points.length-1; ++i)
 		{
 			var from = this.__position.add(this.__points[i]);
-			var to = this.__position.add(this.__points[i+1]);
+			to = this.__position.add(this.__points[i+1]);
 			ctx.moveTo(from.x, from.y);
 			ctx.lineTo(to.x, to.y);
 		}
 		
 		// add last point
 		ctx.moveTo(to.x, to.y);
-		var to = this.__position.add(this.__points[this.__points.length-1]);
+		to = this.__position.add(this.__points[this.__points.length-1]);
 		ctx.lineTo(to.x, to.y);
 		
 		// draw stroke

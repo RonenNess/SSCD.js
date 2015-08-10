@@ -103,7 +103,7 @@ SSCD.CollisionManager = {
 		// line-strip with line-strip collision
 		if (a instanceof SSCD.LineStrip && b instanceof SSCD.LineStrip)
 		{
-			return this._test_collision_linestrip_linestrip(a, b)
+			return this._test_collision_linestrip_linestrip(a, b);
 		}
 
 		// rect-line collision
@@ -427,11 +427,6 @@ SSCD.CollisionManager = {
 			return true;
 		}
 		
-		var r1 = rect.get_top_left();
-		var r2 = rect.get_bottom_left();
-		var r3 = rect.get_top_right();
-		var r4 = rect.get_bottom_right();
-		
 		// create a list of lines to check (in the rectangle) based on circle position to rect center
 		var lines = [];
 		if (rect_center.x > circle_pos.x)
@@ -483,6 +478,6 @@ SSCD.CollisionManager = {
 SSCD.UnsupportedShapes = function (a, b) {
     this.name = "Unsupported Shapes";
     this.message = "Unsupported shapes collision test! '" + a.get_name() + "' <-> '" + b.get_name() + "'.";
-}
+};
 SSCD.UnsupportedShapes.prototype = Error.prototype;
 

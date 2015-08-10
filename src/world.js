@@ -350,15 +350,17 @@ SSCD.World.prototype = {
 	// see test_collision comment for more info
 	__test_collision_shape: function (obj, collision_tags_val, out_list, ret_objs_count)
 	{
+		var grid;
+		
 		// if shape is in this world, use its grid range from cache
 		if (obj.__world === this)
 		{
-			var grid = obj.__grid_bounderies;
+			grid = obj.__grid_bounderies;
 		}
 		// if not in world, generate grid range
 		else
 		{
-			var grid = this.__get_grid_range(obj);
+			grid = this.__get_grid_range(obj);
 		}
 		
 		// for return value
@@ -489,7 +491,7 @@ SSCD.World.prototype = {
 				var curr_grid_chunk = undefined;
 				if (this.__grid[i])
 				{
-					var curr_grid_chunk = this.__grid[i][j];
+					curr_grid_chunk = this.__grid[i][j];
 				}
 								
 				// render current grid chunk
@@ -545,6 +547,6 @@ SSCD.World.prototype = {
 SSCD.IllegalActionError = function (message) {
     this.name = "Illegal Action";
     this.message = (message || "");
-}
+};
 SSCD.IllegalActionError.prototype = Error.prototype;
 

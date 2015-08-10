@@ -57,7 +57,7 @@ SSCD.Circle.prototype = {
 	// called to update axis-aligned-bounding-box position
 	__update_aabb_pos: function()
 	{
-		this.__aabb.position = this.__position.sub_scalar(this.__radius)
+		this.__aabb.position = this.__position.sub_scalar(this.__radius);
 	},
 	
 	// return axis-aligned-bounding-box
