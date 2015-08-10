@@ -1,0 +1,25 @@
+{
+  "name": "sscd",
+  "version": "1.2.0",
+  "description": "Super simple collision detection for 2d gamedev.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RonenNess/SSCD.js.git"
+  },
+  "keywords": [
+    "collision",
+    "detection",
+    "2d",
+    "physics"
+  ],
+  "author": "Ronen Ness",
+  "license": "Zlib",
+  "bugs": {
+    "url": "https://github.com/RonenNess/SSCD.js/issues"
+  },
+  "homepage": "https://github.com/RonenNess/SSCD.js#readme"
+}
