@@ -1184,16 +1184,23 @@ SSCD.Shape.prototype = {
 	// obj: object or vector to repeal (must have move() function).
 	// force: force factor, the bigger this is the stronger / faster the repealing will be. default to 1.
 	// iterations: max iterations of repeal-and-test-again routines. default to 1.
+	// factor_self: factor to multiply force that will apply on this shape. default to 0.
+	// factor_other: factor to multiply force that will apply on this shape. default to 1.
 	// NOTE: this function assume there's collision on start, meaning first iteration of repeal will ALWAYS happen.
 	// return: total movement due to repeling (vector)
-	repel: function(obj, force, iterations)
+	repel: function(obj, force, iterations, factor_self, factor_other)
 	{
 		// set defaults
 		force = force || 1;
 		iterations = iterations || 1;
+		if (factor_self === undefined) factor_self = 0;
+		if (factor_other === undefined) factor_other = 1;
 		
-		// get direction vector
+		// get push vectors
+		var push_vector_other, push_vector_self;
 		var push_vector = this.get_repel_direction(obj).multiply_scalar_self(force);
+		if (factor_other) push_vector_other = push_vector.multiply_scalar(factor_other);
+		if (factor_self) push_vector_self = push_vector.multiply_scalar(factor_self * -1);
 		
 		// for return value
 		var ret = SSCD.Vector.ZERO.clone();
@@ -1206,7 +1213,8 @@ SSCD.Shape.prototype = {
 			iterations--;
 			
 			// do pushing
-			obj.move(push_vector);
+			if (push_vector_other) obj.move(push_vector_other);
+			if (push_vector_self) this.move(push_vector_self);
 			ret.add_self(push_vector);
 			
 			// check if still colliding
