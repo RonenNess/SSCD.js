@@ -8,7 +8,7 @@
 var SSCD = SSCD || {};
 
 // version identifier
-SSCD.VERSION = 1.2;
+SSCD.VERSION = 1.3;
 
 // a collision world. you create an instance of this class and add bodies to it to check collision.
 //

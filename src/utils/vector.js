@@ -72,6 +72,7 @@ SSCD.Vector.prototype = {
 	normalize_self: function()
 	{
 		var by = Math.sqrt(this.x * this.x + this.y * this.y);
+		if (by === 0) return this;
 		this.x /= by;
 		this.y /= by;
 		return this;
