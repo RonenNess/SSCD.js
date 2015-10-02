@@ -1,6 +1,6 @@
 {
   "name": "sscd",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Super simple collision detection for 2d gamedev.",
   "main": "index.js",
   "scripts": {
