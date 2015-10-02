@@ -271,13 +271,40 @@ var collide_with = world.pick_object(player_shape);
 // if object found, use repel to prevent penetration
 if (collide_with)
 {
-	collide_with.repel(player_shape, 1, 1);
+	collide_with.repel(player_shape, 10, 5);
 	
 	// here we will set the position of the player sprite to match its collision body..
 }
 ```
 
-As you can see repel() is very simple. First param is which shape or vector to push outside, second param is pushing force, and last param is how many iterations of repel to run, while in every iteration we check if shapes still collide and push if they do.
+As you can see repel() is very simple. 
+
+First param is which shape or vector to push outside, second param is pushing force, and last param is how many iterations of repel to run (every iteration will check if the shapes still collide and will only push if they do).
+You can play with the force and number of iterations to balance between performance and accuracy.  Weak force with lots of iterations will be smoother but more processing, strong force with few iterations will be faster but less accurate and more rough.
+
+#### repel both ways
+
+repel() accept two additional params: factor_self and factor_other.
+factor_self is a multiplier for the repelling force to apply on self while repelling. By default factor_self is 0, meaning the object doing the repelling will not be affected and will only push the other. 
+factor_other is the multiplier for repelling the other object, which defaults to 1.
+
+So if you want to do a repelling force that will move both objects away from each other equally, you can simply do:
+
+```javascript
+
+monster.repel(player_shape, 10, 5, 1, 1);
+
+```
+
+You can also use these factors to simulate mass differences:
+
+```javascript
+
+var monster_mass = 120;
+var player_mass = 80;
+monster.repel(player_shape, 10, 5, player_mass / monster_mass, monster_mass / player_mass);
+
+```
 
 Note that while this method is good enough to get you started, for a serious game you'd probably want to implement a better penetration resolving algorithm.
 
@@ -287,7 +314,7 @@ SSCD is very memory-efficient, and should not pose any problems.
 However, note that the world grid does not clean itself automatically, meaning that if you move objects around over time you will get some empty world chunks.
 Those empty grid chunks are left by design; they take really small amount of memory and by leaving them in memory its quicker to move objects back into them.
 
-If this insignificant memory waste really bother you, you can tell the collision world to cleanup any unused grid chunks by calling:
+If this insignificant memory waste really bother you, you can tell the collision world to clean-up any unused grid chunks by calling:
 
 ```javascript
 world.cleanup();
@@ -312,6 +339,13 @@ world.cleanup();
 - Added performance examples.
 
 Note: building this version before attempting to become npm compliance.
+
+### 1.3
+
+- Fixed potential bug that vector of (0, 0) turns NaN on normalize. This caused issues when trying to prevent penetration between two objects with the same center.
+- Fixed some javascript warnings etc.
+- Made fully npm compatible.
+- Added factor_self & factor_other to repel(), which make it possible for objects to repel each other simultaneously.
 	
 ## License
 SSCD is provided under the zlib-license, and is absolutely free for use for educational & commercial purposes.
