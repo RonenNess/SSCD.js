@@ -1,12 +1,13 @@
 // random maze generator taken (and modified) from: 
 // http://www.emanueleferonato.com/2015/06/30/pure-javascript-perfect-tile-maze-generation-with-a-bit-of-magic-thanks-to-phaser/
 
-function create_maze(width, height)
+function create_maze(width, height, iterations)
 {
 	
 	var maze = [];
 	var mazeWidth = width;
 	var mazeHeight = height;
+	if (!iterations) iterations = width * height;
 
 	  var moves = [];
 	  for(var i = 0; i < mazeHeight; i ++){
@@ -19,7 +20,7 @@ function create_maze(width, height)
 	  var posY = 1;
 	  maze[posX][posY] = 0; 
 	  moves.push(posY + posY * mazeWidth);
-	  while (true) {
+	  for (var itr = 0; itr < iterations; ++itr) {
 		   if(moves.length){       
 				var possibleDirections = "";
 				if(posX+2 > 0 && posX + 2 < mazeHeight - 1 && maze[posX + 2][posY] == 1){
@@ -35,7 +36,7 @@ function create_maze(width, height)
 					 possibleDirections += "E";
 				} 
 				if(possibleDirections){
-					 var move = game.rnd.between(0, possibleDirections.length - 1);
+					 var move = Math.floor(Math.random() * (possibleDirections.length+1));
 					 switch (possibleDirections[move]){
 						  case "N": 
 							   maze[posX - 2][posY] = 0;

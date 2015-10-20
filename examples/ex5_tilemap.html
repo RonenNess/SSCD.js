@@ -41,6 +41,10 @@
 		// create a tilemap collision world with tile size of 128x128
 		var world = new SSCD.TilemapWorld(128);
 		
+		// create random maze and set it
+		var map = create_maze(100, 100);
+		world.set_from_matrix(map);
+		
 		// create a random level
 		var tiles = [];
 		for (var i = 0; i < 500; ++i)

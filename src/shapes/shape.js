@@ -59,6 +59,8 @@ SSCD.Shape.prototype = {
 	//
 	// you can also set multiple tags, like this:
 	//		shape.set_collision_tags(["walls", "glass"]);
+	//
+	// note: set tags to null to reset all collision tags
 	//		
 	set_collision_tags: function (tags)
 	{
@@ -68,16 +70,26 @@ SSCD.Shape.prototype = {
 			throw new SSCD.IllegalActionError("Can't set tags for a shape that is not inside a collision world!");
 		}
 		
-		// set the collision tag hash value
-		this.__collision_tags_val = this.__world.__get_tags_value(tags);
-		
-		// convert tags to array and store them
-		if (!tags instanceof Array)
+		// special case - if tags is null, reset tags
+		if (tags === null)
 		{
-			tags = [tags];
+			this.__collision_tags = [];
+			this.__collision_tags_val = SSCD.World.prototype._ALL_TAGS_VAL;
 		}
-		this.__collision_tags = tags;
-		
+		// else, set tags
+		else
+		{
+			// set the collision tag hash value
+			this.__collision_tags_val = this.__world.__get_tags_value(tags);
+			
+			// convert tags to array and store them
+			if (!tags instanceof Array)
+			{
+				tags = [tags];
+			}
+			this.__collision_tags = tags;
+		}
+			
 		// if there's a hook to call when setting tags, call it
 		if (this.__update_tags_hook)
 		{

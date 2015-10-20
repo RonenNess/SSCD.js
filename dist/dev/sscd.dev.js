@@ -1112,18 +1112,18 @@ SSCD.TilemapWorld.prototype = {
 	// set if a tile blocks or not
 	// @param index - the x and y index of the tile to set (vector)
 	// @param collision - true if to put a collision shape on this tile, false otherwise
-	// @param tags - optional tags to apply on tile, if collision is set to true (note: if not provided will reset tags)
+	// @param tags - optional tags to apply on tile, if collision is set to true (note: null to reset tags)
 	set_tile: function(index, collision, tags)
 	{
 		// if already have shape, get it
 		var shape = this.get_tile(index);
 		
 		// if requested to remove the collision from this tile, do it
-		if (collision === false)
+		if (!collision)
 		{
-			this.__set_tile_shape(index, null);
 			if (shape)
 			{
+				this.__set_tile_shape(index, null);
 				this.remove(shape);
 				delete shape;
 			}
@@ -1135,12 +1135,61 @@ SSCD.TilemapWorld.prototype = {
 		if (shape === undefined)
 		{
 			var tilesize = this.__params.grid_size;
-			shape = this.add(new SSCD.Rectangle(index.multiply_scalar(tilesize), new SSCD.Vector(tilesize, tilesize)));
+			shape = this.__add_tile_shape(new SSCD.Rectangle(index.multiply_scalar(tilesize), new SSCD.Vector(tilesize, tilesize)), index);
 			this.__set_tile_shape(index, shape);
 		}
 		
 		// now update tags, if provided
-		shape.set_collision_tags(tags);
+		if (tags !== undefined)
+		{
+			shape.set_collision_tags(tags);
+		}
+	},
+	
+	// add collision tile (for internal usage)
+	__add_tile_shape: function (obj, index)
+	{
+		
+		// make sure lists exist
+		this.__grid[index.x] = this.__grid[index.x] || {};
+		this.__grid[index.x][index.y] = this.__grid[index.x][index.y] || [];
+		
+		// get current grid chunk
+		var curr_grid_chunk = this.__grid[index.x][index.y];
+		
+		// add object to grid chunk
+		curr_grid_chunk.push(obj);
+		
+		// add chunk to shape chunks list
+		obj.__grid_chunks = [curr_grid_chunk];	
+		
+		// set world and grid chunks boundaries
+		obj.__world = this;
+		obj.__grid_bounderies = {min_x: index.x, min_y: index.y, max_x: index.x, max_y: index.y};
+		// obj.__last_insert_aabb = obj.get_aabb().clone();
+		
+		// add to list of all shapes
+		this.__all_shapes[obj.get_id()] = obj;
+		
+		// return the newly added object
+		return obj;
+	},
+	
+	// set tilemap from a matrix (array of arrays)
+	// @param matrix is the matrix to set, every 1 will be collision, every 0 will not collide. (note: true and false works too)
+	set_from_matrix: function(matrix)
+	{
+		var index = new SSCD.Vector(0, 0);
+		for (var i = 0; i < matrix.length; ++i)
+		{
+			index.x = 0;
+			for (var j = 0; j < matrix[i].length; ++j)
+			{
+				this.set_tile(index, matrix[i][j]);
+				index.x++;
+			}
+			index.y++;
+		}
 	},
 	
 	// get the collision shape of a tile (or undefined if have no collision shape on this tile)
@@ -1233,6 +1282,8 @@ SSCD.Shape.prototype = {
 	//
 	// you can also set multiple tags, like this:
 	//		shape.set_collision_tags(["walls", "glass"]);
+	//
+	// note: set tags to null to reset all collision tags
 	//		
 	set_collision_tags: function (tags)
 	{
@@ -1242,16 +1293,26 @@ SSCD.Shape.prototype = {
 			throw new SSCD.IllegalActionError("Can't set tags for a shape that is not inside a collision world!");
 		}
 		
-		// set the collision tag hash value
-		this.__collision_tags_val = this.__world.__get_tags_value(tags);
-		
-		// convert tags to array and store them
-		if (!tags instanceof Array)
+		// special case - if tags is null, reset tags
+		if (tags === null)
 		{
-			tags = [tags];
+			this.__collision_tags = [];
+			this.__collision_tags_val = SSCD.World.prototype._ALL_TAGS_VAL;
 		}
-		this.__collision_tags = tags;
-		
+		// else, set tags
+		else
+		{
+			// set the collision tag hash value
+			this.__collision_tags_val = this.__world.__get_tags_value(tags);
+			
+			// convert tags to array and store them
+			if (!tags instanceof Array)
+			{
+				tags = [tags];
+			}
+			this.__collision_tags = tags;
+		}
+			
 		// if there's a hook to call when setting tags, call it
 		if (this.__update_tags_hook)
 		{
