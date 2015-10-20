@@ -24,6 +24,504 @@
 
 */
 
+// FILE: sscd.js
+
+/*
+* First file we import, set version and namespace
+* Author: Ronen Ness, 2015
+*/
+
+
+// set namespace
+var SSCD = SSCD || {};
+
+// version identifier
+SSCD.VERSION = 1.4;
+
+// FILE: utils/math.js
+
+/*
+* Add some useful Math functions
+* Author: Ronen Ness, 2015
+*/
+
+// set namespace
+var SSCD = SSCD || {};
+SSCD.Math = {};
+
+// Converts from degrees to radians.
+SSCD.Math.to_radians = function (degrees) {
+	return degrees * Math.PI / 180;
+};
+
+// Converts from radians to degrees.
+SSCD.Math.to_degrees = function (radians) {
+	return radians * 180 / Math.PI;
+};
+
+// get distance between vectors
+SSCD.Math.distance = function (p1, p2) {
+	var dx = p2.x - p1.x,
+		dy = p2.y - p1.y;
+	return Math.sqrt(dx * dx + dy * dy);
+};
+
+// get distance without sqrt
+SSCD.Math.dist2 = function (p1, p2) {
+	var dx = p2.x - p1.x,
+		dy = p2.y - p1.y;
+	return (dx * dx + dy * dy);
+};
+
+// angle between two vectors
+SSCD.Math.angle = function (P1, P2) {
+	var deltaY = P2.y - P1.y,
+		deltaX = P2.x - P1.x;
+
+	return Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+};
+
+// distance from point to line
+// p is point to check
+// v and w are the two edges of the line segment
+SSCD.Math.distance_to_line = function (p, v, w) {
+
+	var l2 = SSCD.Math.dist2(v, w);
+	var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+	if (t < 0) {
+		return SSCD.Math.distance(p, v);
+	}
+	if (t > 1) {
+		return SSCD.Math.distance(p, w);
+	}
+	return SSCD.Math.distance(p, { x: v.x + t * (w.x - v.x),
+					y: v.y + t * (w.y - v.y) });
+};
+
+// Adapted from: http://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/1968345#1968345
+// check if two lines intersect
+SSCD.Math.line_intersects = function (p0, p1, p2, p3) {
+
+    var s1_x, s1_y, s2_x, s2_y;
+    s1_x = p1.x - p0.x;
+    s1_y = p1.y - p0.y;
+    s2_x = p3.x - p2.x;
+    s2_y = p3.y - p2.y;
+
+    var s, t;
+    s = (-s1_y * (p0.x - p2.x) + s1_x * (p0.y - p2.y)) / (-s2_x * s1_y + s1_x * s2_y);
+    t = (s2_x * (p0.y - p2.y) - s2_y * (p0.x - p2.x)) / (-s2_x * s1_y + s1_x * s2_y);
+
+    if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
+    {
+		// Collision detected
+		return 1;
+	}
+
+    return 0; // No collision
+};
+
+// return if point is on given line
+SSCD.Math.is_on_line = function (v, l1, l2) {
+	return SSCD.Math.distance_to_line(v, l1, l2) <= 5;
+};
+
+// FILE: utils/vector.js
+
+/*
+* Define vector class
+* Author: Ronen Ness, 2015
+*/
+
+// set namespace
+var SSCD = SSCD || {};
+
+// a 2d vector
+SSCD.Vector = function (x, y) {
+	this.x = x;
+	this.y = y;
+};
+ 
+ 
+// set vector functions
+SSCD.Vector.prototype = {
+	
+	// for debug and prints
+	get_name: function()
+	{
+		return "vector";
+	},
+	
+	// clone vector
+	clone: function ()
+	{
+		return new SSCD.Vector(this.x, this.y);
+	},
+	
+	// set value from another vector
+	set: function(vector)
+	{
+		this.x = vector.x;
+		this.y = vector.y;
+	},
+	
+	// flip between x and y (return without changing self)
+	flip: function()
+	{
+		return new SSCD.Vector(this.y, this.x);
+	},
+	
+	// flip between x and y (change self values)
+	flip_self: function()
+	{
+		this.y = [this.x, this.x = this.y][0];
+		return this;
+	},
+	
+	// make negative (return without changing self)
+	negative: function()
+	{
+		return this.multiply_scalar(-1);
+	},
+	
+	// make negative self (multiply by -1)
+	negative_self: function()
+	{
+		this.multiply_scalar_self(-1);
+		return this;
+	},
+	
+	// get distance from another vector
+	distance_from: function (other)
+	{
+		return SSCD.Math.distance(this, other);
+	},
+	
+	// get angle from another vector
+	angle_from: function (other)
+	{
+		return SSCD.Math.angle(this, other);
+	},
+	
+	// move the position of this vector (same as add_self)
+	move: function(vector)
+	{
+		this.x += vector.x;
+		this.y += vector.y;
+		return this;
+	},
+	
+	// normalize this vector
+	normalize_self: function()
+	{
+		var by = Math.sqrt(this.x * this.x + this.y * this.y);
+		if (by === 0) return this;
+		this.x /= by;
+		this.y /= by;
+		return this;
+	},
+		
+	// return normalized copy (don't change self)
+	normalize: function()
+	{
+		return this.clone().normalize_self();
+	},
+	
+	// add vector to self
+	add_self: function (other)
+	{
+		this.x += other.x;
+		this.y += other.y;
+		return this;
+	},
+	
+	// sub vector from self
+	sub_self: function (other)
+	{
+		this.x -= other.x;
+		this.y -= other.y;
+		return this;
+	},
+	
+	// divide vector from self
+	divide_self: function (other)
+	{
+		this.x /= other.x;
+		this.y /= other.y;
+		return this;
+	},
+	
+	// multiple this vector with another
+	multiply_self: function (other)
+	{
+		this.x *= other.x;
+		this.y *= other.y;
+		return this;
+	},	
+	
+	// add scalar to self
+	add_scalar_self: function (val)
+	{
+		this.x += val;
+		this.y += val;
+		return this;
+	},
+	
+	// substract scalar from self
+	sub_scalar_self: function (val)
+	{
+		this.x -= val;
+		this.y -= val;
+		return this;
+	},
+
+	// divide scalar from self
+	divide_scalar_self: function (val)
+	{
+		this.x /= val;
+		this.y /= val;
+		return this;
+	},
+	
+	// multiply scalar from self
+	multiply_scalar_self: function (val)
+	{
+		this.x *= val;
+		this.y *= val;
+		return this;
+	},	
+	
+	// add to vector without changing self
+	add: function (other)
+	{
+		return this.clone().add_self(other);
+	},
+	
+	// sub from vector without changing self
+	sub: function (other)
+	{
+		return this.clone().sub_self(other);
+	},
+	
+	// multiply vector without changing self
+	multiply: function (other)
+	{
+		return this.clone().multiply_self(other);
+	},	
+	
+	// divide vector without changing self
+	divide: function (other)
+	{
+		return this.clone().divide_self(other);
+	},		
+	
+	// add scalar without changing self
+	add_scalar: function (val)
+	{
+		return this.clone().add_scalar_self(val);
+	},
+	
+	// substract scalar without changing self
+	sub_scalar: function (val)
+	{
+		return this.clone().sub_scalar_self(val);
+	},
+	
+	// multiply scalar without changing self
+	multiply_scalar: function (val)
+	{
+		return this.clone().multiply_scalar_self(val);
+	},	
+	
+	// divide scalar without changing self
+	divide_scalar: function (val)
+	{
+		return this.clone().divide_scalar_self(val);
+	},
+	
+	// clamp vector values
+	clamp: function (min, max)
+	{
+		if (this.x < min) this.x = min;
+		if (this.y < min) this.y = min;
+		if (this.x > max) this.x = max;
+		if (this.y > max) this.y = max;
+		return this;
+	},
+	
+	// get angle from vector
+	from_angle: function (angle)
+	{
+		this.x = Math.cos(angle);
+		this.y = Math.sin(angle);
+		return this;
+	},
+	
+	// apply a function on x and y components on self
+	apply_self: function (func)
+	{
+		this.x = func(this.x);
+		this.y = func(this.y);
+		return this;
+	},
+	
+	// apply a function on x and y components
+	apply: function (func)
+	{
+		return this.clone().apply_self(func);
+	},
+	
+	// print debug
+	debug: function ()
+	{
+		console.debug(this.x + ", " + this.y);
+	}
+};
+
+SSCD.Vector.ZERO = new SSCD.Vector(0, 0);
+SSCD.Vector.ONE = new SSCD.Vector(1, 1);
+SSCD.Vector.UP = new SSCD.Vector(0, -1);
+SSCD.Vector.DOWN = new SSCD.Vector(0, 1);
+SSCD.Vector.LEFT = new SSCD.Vector(-1, 0);
+SSCD.Vector.RIGHT = new SSCD.Vector(1, 0);
+SSCD.Vector.UP_LEFT = new SSCD.Vector(-1, -1);
+SSCD.Vector.DOWN_LEFT = new SSCD.Vector(-1, 1);
+SSCD.Vector.UP_RIGHT = new SSCD.Vector(1, -1);
+SSCD.Vector.DOWN_RIGHT = new SSCD.Vector(1, 1);
+
+// FILE: utils/extend.js
+
+/*
+* Provide simple inheritance (extend prototype)
+* Author: Ronen Ness, 2015
+*/
+
+// set namespace
+var SSCD = SSCD || {};
+
+// inherit base into child
+// base / child must be object's prototype (eg SSCD.something.prototype)
+// NOTE: don't use javascript built-ins so you won't mess up their prototypes.
+SSCD.extend = function (base, child)
+{	
+
+	// copy all properties
+	for (var prop in base)
+	{
+		if (child[prop])
+			continue;
+		
+		child[prop] = base[prop];
+	}
+
+	// create inits list (constructors)
+	// this creates a function namd .init() that will call all the __init__() functions in the inheritance chain by the order it was extended.
+	child.__inits = child.__inits || [];
+	
+	// add parent init function
+	if (base.__init__)
+	{
+		child.__inits.push(base.__init__);
+	}
+
+	// set init function
+	child.init = function ()
+	{
+		for (var i = 0; i < this.__inits.length; ++i)
+		{
+			this.__curr_init_func = this.__inits[i];
+			this.__curr_init_func();
+		}
+		delete this.__curr_init_func;
+	};
+};
+
+// for not-implemented exceptions
+SSCD.NotImplementedError = function (message) {
+    this.name = "NotImplementedError";
+    this.message = (message || "");
+};
+SSCD.NotImplementedError.prototype = Error.prototype;
+
+// FILE: utils/aabb.js
+
+/*
+* Define axis-aligned-bounding-box class.
+* Author: Ronen Ness, 2015
+*/
+
+// set namespace
+var SSCD = SSCD || {};
+
+// Axis-aligned-bounding-box class
+// position: top-left corner (vector)
+// size: width and height (vector)
+SSCD.AABB = function (position, size) {
+	this.position = position.clone();
+	this.size = size.clone();
+};
+
+// some aabb methods
+SSCD.AABB.prototype = {
+	
+	// expand this bounding-box by other bounding box
+	expand: function (other)
+	{
+		// get new bounds
+		var min_x = Math.min(this.position.x, other.position.x);
+		var min_y = Math.min(this.position.y, other.position.y);
+		var max_x = Math.max(this.position.x + this.size.x, other.position.x + other.size.x);
+		var max_y = Math.max(this.position.y + this.size.y, other.position.y + other.size.y);
+		
+		// set them
+		this.position.x = min_x;
+		this.position.y = min_y;
+		this.size.x = max_x - min_x;
+		this.size.y = max_y - min_y;
+	},
+	
+	// expand this bounding-box with vector
+	add_vector: function(vector)
+	{
+		// update position x
+		var push_pos_x = this.position.x - vector.x;
+		if (push_pos_x > 0)
+		{
+			this.position.x -= push_pos_x;
+			this.size.x += push_pos_x;
+		}
+		
+		// update position y
+		var push_pos_y = this.position.y - vector.y;
+		if (push_pos_y > 0)
+		{
+			this.position.y -= push_pos_y;
+			this.size.y += push_pos_y;
+		}
+		
+		// update size x
+		var push_size_x = vector.x - (this.position.x + this.size.x);
+		if (push_size_x > 0)
+		{
+			this.size.x += push_size_x;
+		}
+		
+		// update size y
+		var push_size_y = vector.y - (this.position.y + this.size.y);
+		if (push_size_y > 0)
+		{
+			this.size.y += push_size_y;
+		}
+	},
+	
+	// clone this aabb
+	clone: function()
+	{
+		return new SSCD.AABB(this.position, this.size);
+	}
+	
+};
+
 // FILE: world.js
 
 /*
@@ -36,7 +534,7 @@
 var SSCD = SSCD || {};
 
 // version identifier
-SSCD.VERSION = 1.3;
+SSCD.VERSION = 1.4;
 
 // a collision world. you create an instance of this class and add bodies to it to check collision.
 //
@@ -48,25 +546,32 @@ SSCD.VERSION = 1.3;
 //								less accurate collision around the edges. set to 0 if you want to always update grid (useful if all your moving objects move fast)
 SSCD.World = function (params) {
 	
-	// set defaults
-	params = params || {};
-	params.grid_size = params.grid_size || 512;
-	params.grid_error = params.grid_error !== undefined ? params.grid_error : 2;
-
-	// create grid and set params
-	this.__grid = {};
-	this.__params = params;
+	this.__init_world(params);
 	
-	// all the shapes currently in this world
-	this.__all_shapes = {};
-
-	// create the empty collision flags dictionary
-	this.__collision_tags = {};
-	this.__next_coll_tag = 0;
 };
 
 // collision world prototype
 SSCD.World.prototype = {
+
+	// init the world
+	__init_world: function(params)
+	{	
+		// set defaults
+		params = params || {};
+		params.grid_size = params.grid_size || 512;
+		params.grid_error = params.grid_error !== undefined ? params.grid_error : 2;
+
+		// create grid and set params
+		this.__grid = {};
+		this.__params = params;
+		
+		// all the shapes currently in this world
+		this.__all_shapes = {};
+
+		// create the empty collision flags dictionary
+		this.__collision_tags = {};
+		this.__next_coll_tag = 0;	
+	},
 
 	// define a new collision tag
 	__create_collision_tag: function (name)
@@ -580,476 +1085,139 @@ SSCD.IllegalActionError.prototype = Error.prototype;
 
 
 
-// FILE: utils/math.js
+// FILE: tilemap.js
 
 /*
-* Add some useful Math functions
+* Tilemap is a special type of collision world, designed specifically for a 2d tilemap
 * Author: Ronen Ness, 2015
 */
 
-// set namespace
-var SSCD = SSCD || {};
-SSCD.Math = {};
 
-// Converts from degrees to radians.
-SSCD.Math.to_radians = function (degrees) {
-	return degrees * Math.PI / 180;
+// a collision world. you create an instance of this class and add bodies to it to check collision.
+//	@param tile_size: size, in pixels, of a single tile
+// @param additional_params: extra params. see SSCD.World for more info.
+SSCD.TilemapWorld = function (tile_size, additional_params) {
+	
+	// set defaults
+	var params = additional_params;
+	params = params || {};
+	params.grid_size = tile_size;
+	this.__tiles = {};
+	this.__init_world(params);
 };
 
-// Converts from radians to degrees.
-SSCD.Math.to_degrees = function (radians) {
-	return radians * 180 / Math.PI;
-};
+// tilemap collision world
+SSCD.TilemapWorld.prototype = {
 
-// get distance between vectors
-SSCD.Math.distance = function (p1, p2) {
-	var dx = p2.x - p1.x,
-		dy = p2.y - p1.y;
-	return Math.sqrt(dx * dx + dy * dy);
-};
-
-// get distance without sqrt
-SSCD.Math.dist2 = function (p1, p2) {
-	var dx = p2.x - p1.x,
-		dy = p2.y - p1.y;
-	return (dx * dx + dy * dy);
-};
-
-// angle between two vectors
-SSCD.Math.angle = function (P1, P2) {
-	var deltaY = P2.y - P1.y,
-		deltaX = P2.x - P1.x;
-
-	return Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-};
-
-// distance from point to line
-// p is point to check
-// v and w are the two edges of the line segment
-SSCD.Math.distance_to_line = function (p, v, w) {
-
-	var l2 = SSCD.Math.dist2(v, w);
-	var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
-	if (t < 0) {
-		return SSCD.Math.distance(p, v);
-	}
-	if (t > 1) {
-		return SSCD.Math.distance(p, w);
-	}
-	return SSCD.Math.distance(p, { x: v.x + t * (w.x - v.x),
-					y: v.y + t * (w.y - v.y) });
-};
-
-// Adapted from: http://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/1968345#1968345
-// check if two lines intersect
-SSCD.Math.line_intersects = function (p0, p1, p2, p3) {
-
-    var s1_x, s1_y, s2_x, s2_y;
-    s1_x = p1.x - p0.x;
-    s1_y = p1.y - p0.y;
-    s2_x = p3.x - p2.x;
-    s2_y = p3.y - p2.y;
-
-    var s, t;
-    s = (-s1_y * (p0.x - p2.x) + s1_x * (p0.y - p2.y)) / (-s2_x * s1_y + s1_x * s2_y);
-    t = (s2_x * (p0.y - p2.y) - s2_y * (p0.x - p2.x)) / (-s2_x * s1_y + s1_x * s2_y);
-
-    if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
-    {
-		// Collision detected
-		return 1;
-	}
-
-    return 0; // No collision
-};
-
-// return if point is on given line
-SSCD.Math.is_on_line = function (v, l1, l2) {
-	return SSCD.Math.distance_to_line(v, l1, l2) <= 5;
-};
-
-// FILE: utils/vector.js
-
-/*
-* Define vector class
-* Author: Ronen Ness, 2015
-*/
-
-// set namespace
-var SSCD = SSCD || {};
-
-// a 2d vector
-SSCD.Vector = function (x, y) {
-	this.x = x;
-	this.y = y;
-};
- 
- 
-// set vector functions
-SSCD.Vector.prototype = {
-	
-	// for debug and prints
-	get_name: function()
+	// set if a tile blocks or not
+	// @param index - the x and y index of the tile to set (vector)
+	// @param collision - true if to put a collision shape on this tile, false otherwise
+	// @param tags - optional tags to apply on tile, if collision is set to true (note: null to reset tags)
+	set_tile: function(index, collision, tags)
 	{
-		return "vector";
-	},
-	
-	// clone vector
-	clone: function ()
-	{
-		return new SSCD.Vector(this.x, this.y);
-	},
-	
-	// set value from another vector
-	set: function(vector)
-	{
-		this.x = vector.x;
-		this.y = vector.y;
-	},
-	
-	// make negative (return without changing self)
-	negative: function()
-	{
-		return this.multiply_scalar(-1);
-	},
-	
-	// make negative self (multiply by -1)
-	negative_self: function()
-	{
-		this.multiply_scalar_self(-1);
-		return this;
-	},
-	
-	// get distance from another vector
-	distance_from: function (other)
-	{
-		return SSCD.Math.distance(this, other);
-	},
-	
-	// get angle from another vector
-	angle_from: function (other)
-	{
-		return SSCD.Math.angle(this, other);
-	},
-	
-	// move the position of this vector (same as add_self)
-	move: function(vector)
-	{
-		this.x += vector.x;
-		this.y += vector.y;
-		return this;
-	},
-	
-	// normalize this vector
-	normalize_self: function()
-	{
-		var by = Math.sqrt(this.x * this.x + this.y * this.y);
-		if (by === 0) return this;
-		this.x /= by;
-		this.y /= by;
-		return this;
-	},
+		// if already have shape, get it
+		var shape = this.get_tile(index);
 		
-	// return normalized copy (don't change self)
-	normalize: function()
-	{
-		return this.clone().normalize_self();
-	},
-	
-	// add vector to self
-	add_self: function (other)
-	{
-		this.x += other.x;
-		this.y += other.y;
-		return this;
-	},
-	
-	// sub vector from self
-	sub_self: function (other)
-	{
-		this.x -= other.x;
-		this.y -= other.y;
-		return this;
-	},
-	
-	// divide vector from self
-	divide_self: function (other)
-	{
-		this.x /= other.x;
-		this.y /= other.y;
-		return this;
-	},
-	
-	// multiple this vector with another
-	multiply_self: function (other)
-	{
-		this.x *= other.x;
-		this.y *= other.y;
-		return this;
-	},	
-	
-	// add scalar to self
-	add_scalar_self: function (val)
-	{
-		this.x += val;
-		this.y += val;
-		return this;
-	},
-	
-	// substract scalar from self
-	sub_scalar_self: function (val)
-	{
-		this.x -= val;
-		this.y -= val;
-		return this;
-	},
-
-	// divide scalar from self
-	divide_scalar_self: function (val)
-	{
-		this.x /= val;
-		this.y /= val;
-		return this;
-	},
-	
-	// multiply scalar from self
-	multiply_scalar_self: function (val)
-	{
-		this.x *= val;
-		this.y *= val;
-		return this;
-	},	
-	
-	// add to vector without changing self
-	add: function (other)
-	{
-		return this.clone().add_self(other);
-	},
-	
-	// sub from vector without changing self
-	sub: function (other)
-	{
-		return this.clone().sub_self(other);
-	},
-	
-	// multiply vector without changing self
-	multiply: function (other)
-	{
-		return this.clone().multiply_self(other);
-	},	
-	
-	// divide vector without changing self
-	divide: function (other)
-	{
-		return this.clone().divide_self(other);
-	},		
-	
-	// add scalar without changing self
-	add_scalar: function (val)
-	{
-		return this.clone().add_scalar_self(val);
-	},
-	
-	// substract scalar without changing self
-	sub_scalar: function (val)
-	{
-		return this.clone().sub_scalar_self(val);
-	},
-	
-	// multiply scalar without changing self
-	multiply_scalar: function (val)
-	{
-		return this.clone().multiply_scalar_self(val);
-	},	
-	
-	// divide scalar without changing self
-	divide_scalar: function (val)
-	{
-		return this.clone().divide_scalar_self(val);
-	},
-	
-	// clamp vector values
-	clamp: function (min, max)
-	{
-		if (this.x < min) this.x = min;
-		if (this.y < min) this.y = min;
-		if (this.x > max) this.x = max;
-		if (this.y > max) this.y = max;
-		return this;
-	},
-	
-	// get angle from vector
-	from_angle: function (angle)
-	{
-		this.x = Math.cos(angle);
-		this.y = Math.sin(angle);
-		return this;
-	},
-	
-	// apply a function on x and y components on self
-	apply_self: function (func)
-	{
-		this.x = func(this.x);
-		this.y = func(this.y);
-		return this;
-	},
-	
-	// apply a function on x and y components
-	apply: function (func)
-	{
-		return this.clone().apply_self(func);
-	},
-	
-	// print debug
-	debug: function ()
-	{
-		console.debug(this.x + ", " + this.y);
-	}
-};
-
-SSCD.Vector.ZERO = new SSCD.Vector(0, 0);
-SSCD.Vector.ONE = new SSCD.Vector(1, 1);
-SSCD.Vector.UP = new SSCD.Vector(0, -1);
-SSCD.Vector.DOWN = new SSCD.Vector(0, 1);
-SSCD.Vector.LEFT = new SSCD.Vector(-1, 0);
-SSCD.Vector.RIGHT = new SSCD.Vector(1, 0);
-SSCD.Vector.UP_LEFT = new SSCD.Vector(-1, -1);
-SSCD.Vector.DOWN_LEFT = new SSCD.Vector(-1, 1);
-SSCD.Vector.UP_RIGHT = new SSCD.Vector(1, -1);
-SSCD.Vector.DOWN_RIGHT = new SSCD.Vector(1, 1);
-
-// FILE: utils/extend.js
-
-/*
-* Provide simple inheritance (extend prototype)
-* Author: Ronen Ness, 2015
-*/
-
-// set namespace
-var SSCD = SSCD || {};
-
-// inherit base into child
-// base / child must be object's prototype (eg SSCD.something.prototype)
-// NOTE: don't use javascript built-ins so you won't mess up their prototypes.
-SSCD.extend = function (base, child)
-{	
-
-	// copy all properties
-	for (var prop in base)
-	{
-		if (child[prop])
-			continue;
-		
-		child[prop] = base[prop];
-	}
-
-	// create inits list (constructors)
-	// this creates a function namd .init() that will call all the __init__() functions in the inheritance chain by the order it was extended.
-	child.__inits = child.__inits || [];
-	
-	// add parent init function
-	if (base.__init__)
-	{
-		child.__inits.push(base.__init__);
-	}
-
-	// set init function
-	child.init = function ()
-	{
-		for (var i = 0; i < this.__inits.length; ++i)
+		// if requested to remove the collision from this tile, do it
+		if (!collision)
 		{
-			this.__curr_init_func = this.__inits[i];
-			this.__curr_init_func();
-		}
-		delete this.__curr_init_func;
-	};
-};
-
-// for not-implemented exceptions
-SSCD.NotImplementedError = function (message) {
-    this.name = "NotImplementedError";
-    this.message = (message || "");
-};
-SSCD.NotImplementedError.prototype = Error.prototype;
-
-// FILE: utils/aabb.js
-
-/*
-* Define axis-aligned-bounding-box class.
-* Author: Ronen Ness, 2015
-*/
-
-// set namespace
-var SSCD = SSCD || {};
-
-// Axis-aligned-bounding-box class
-// position: top-left corner (vector)
-// size: width and height (vector)
-SSCD.AABB = function (position, size) {
-	this.position = position.clone();
-	this.size = size.clone();
-};
-
-// some aabb methods
-SSCD.AABB.prototype = {
-	
-	// expand this bounding-box by other bounding box
-	expand: function (other)
-	{
-		// get new bounds
-		var min_x = Math.min(this.position.x, other.position.x);
-		var min_y = Math.min(this.position.y, other.position.y);
-		var max_x = Math.max(this.position.x + this.size.x, other.position.x + other.size.x);
-		var max_y = Math.max(this.position.y + this.size.y, other.position.y + other.size.y);
-		
-		// set them
-		this.position.x = min_x;
-		this.position.y = min_y;
-		this.size.x = max_x - min_x;
-		this.size.y = max_y - min_y;
-	},
-	
-	// expand this bounding-box with vector
-	add_vector: function(vector)
-	{
-		// update position x
-		var push_pos_x = this.position.x - vector.x;
-		if (push_pos_x > 0)
-		{
-			this.position.x -= push_pos_x;
-			this.size.x += push_pos_x;
+			if (shape)
+			{
+				this.__set_tile_shape(index, null);
+				this.remove(shape);
+				delete shape;
+			}
+			return;
 		}
 		
-		// update position y
-		var push_pos_y = this.position.y - vector.y;
-		if (push_pos_y > 0)
+		// if got here it means we need to set collision / update tags for this tile
+		// first, check if need to create new collision shape
+		if (shape === undefined)
 		{
-			this.position.y -= push_pos_y;
-			this.size.y += push_pos_y;
+			var tilesize = this.__params.grid_size;
+			shape = this.__add_tile_shape(new SSCD.Rectangle(index.multiply_scalar(tilesize), new SSCD.Vector(tilesize, tilesize)), index);
+			this.__set_tile_shape(index, shape);
 		}
 		
-		// update size x
-		var push_size_x = vector.x - (this.position.x + this.size.x);
-		if (push_size_x > 0)
+		// now update tags, if provided
+		if (tags !== undefined)
 		{
-			this.size.x += push_size_x;
-		}
-		
-		// update size y
-		var push_size_y = vector.y - (this.position.y + this.size.y);
-		if (push_size_y > 0)
-		{
-			this.size.y += push_size_y;
+			shape.set_collision_tags(tags);
 		}
 	},
 	
-	// clone this aabb
-	clone: function()
+	// add collision tile (for internal usage)
+	__add_tile_shape: function (obj, index)
 	{
-		return new SSCD.AABB(this.position, this.size);
-	}
+		
+		// make sure lists exist
+		this.__grid[index.x] = this.__grid[index.x] || {};
+		this.__grid[index.x][index.y] = this.__grid[index.x][index.y] || [];
+		
+		// get current grid chunk
+		var curr_grid_chunk = this.__grid[index.x][index.y];
+		
+		// add object to grid chunk
+		curr_grid_chunk.push(obj);
+		
+		// add chunk to shape chunks list
+		obj.__grid_chunks = [curr_grid_chunk];	
+		
+		// set world and grid chunks boundaries
+		obj.__world = this;
+		obj.__grid_bounderies = {min_x: index.x, min_y: index.y, max_x: index.x, max_y: index.y};
+		// obj.__last_insert_aabb = obj.get_aabb().clone();
+		
+		// add to list of all shapes
+		this.__all_shapes[obj.get_id()] = obj;
+		
+		// return the newly added object
+		return obj;
+	},
 	
-};
+	// set tilemap from a matrix (array of arrays)
+	// @param matrix is the matrix to set, every 1 will be collision, every 0 will not collide. (note: true and false works too)
+	set_from_matrix: function(matrix)
+	{
+		var index = new SSCD.Vector(0, 0);
+		for (var i = 0; i < matrix.length; ++i)
+		{
+			index.x = 0;
+			for (var j = 0; j < matrix[i].length; ++j)
+			{
+				this.set_tile(index, matrix[i][j]);
+				index.x++;
+			}
+			index.y++;
+		}
+	},
+	
+	// get the collision shape of a tile (or undefined if have no collision shape on this tile)
+	// @param index - the x and y index of the tile to get
+	get_tile: function(index)
+	{
+		return this.__tiles[index.x + "_" + index.y];
+	},
+	
+	// set the collision shape of a tile
+	__set_tile_shape: function(index, shape)
+	{
+		if (shape === null)
+		{
+			delete this.__tiles[index.x + "_" + index.y];
+		}
+		else
+		{
+			this.__tiles[index.x + "_" + index.y] = shape;
+		}
+	},
+	
+};
+
+// inherit from basic world class.
+SSCD.extend(SSCD.World.prototype, SSCD.TilemapWorld.prototype);
+
+
 
 // FILE: shapes/shape.js
 
@@ -1114,6 +1282,8 @@ SSCD.Shape.prototype = {
 	//
 	// you can also set multiple tags, like this:
 	//		shape.set_collision_tags(["walls", "glass"]);
+	//
+	// note: set tags to null to reset all collision tags
 	//		
 	set_collision_tags: function (tags)
 	{
@@ -1123,16 +1293,26 @@ SSCD.Shape.prototype = {
 			throw new SSCD.IllegalActionError("Can't set tags for a shape that is not inside a collision world!");
 		}
 		
-		// set the collision tag hash value
-		this.__collision_tags_val = this.__world.__get_tags_value(tags);
-		
-		// convert tags to array and store them
-		if (!tags instanceof Array)
+		// special case - if tags is null, reset tags
+		if (tags === null)
 		{
-			tags = [tags];
+			this.__collision_tags = [];
+			this.__collision_tags_val = SSCD.World.prototype._ALL_TAGS_VAL;
 		}
-		this.__collision_tags = tags;
-		
+		// else, set tags
+		else
+		{
+			// set the collision tag hash value
+			this.__collision_tags_val = this.__world.__get_tags_value(tags);
+			
+			// convert tags to array and store them
+			if (!tags instanceof Array)
+			{
+				tags = [tags];
+			}
+			this.__collision_tags = tags;
+		}
+			
 		// if there's a hook to call when setting tags, call it
 		if (this.__update_tags_hook)
 		{
@@ -1873,28 +2053,33 @@ SSCD.CompositeShape = function (position, objects)
 {
 	// call init chain
 	this.init();
-	
-	// create empty list of shapes
-	this.__shapes = [];
-	
-	// default position
-	position = position || SSCD.Vector.ZERO;
-	this.set_position(position);
-
-	// add objects if provided
-	if (objects)
-	{
-		for (var i = 0; i < objects.length; ++i)
-		{
-			this.add(objects[i]);
-		}
-	}
+	this.__init_comp_shape(position, objects);
 };
 
 // set Rectangle methods
 SSCD.CompositeShape.prototype = {
 	
 	__type: "composite-shape",
+	
+	// init the composite shape
+	__init_comp_shape: function(position, objects)
+	{
+		// create empty list of shapes
+		this.__shapes = [];
+		
+		// default position
+		position = position || SSCD.Vector.ZERO;
+		this.set_position(position);
+
+		// add objects if provided
+		if (objects)
+		{
+			for (var i = 0; i < objects.length; ++i)
+			{
+				this.add(objects[i]);
+			}
+		}
+	},
 	
 	// render (for debug purposes)
 	render: function (ctx, camera_pos)
@@ -1908,17 +2093,26 @@ SSCD.CompositeShape.prototype = {
 	
 	// repeal an object from this object.
 	// here we iterate over sub-object and repeal only from the ones we collide with
-	repel: function(obj, force, iterations)
+	repel: function(obj, force, iterations, factor_self, factor_other)
 	{
+		// do repel from independant shapes inside this composite shape
 		var ret = SSCD.Vector.ZERO.clone();
 		for (var i = 0; i < this.__shapes.length; ++i)
 		{
 			var shape = this.__shapes[i].shape;
 			if (shape.test_collide_with(obj))
 			{
-				ret.add_self(shape.repel(obj, force, iterations));
+				ret.add_self(shape.repel(obj, force, iterations, 0, factor_other));
 			}
 		}
+
+		// if have factor to move self, apply it
+		if ((factor_self || 0) !== 0)
+		{
+			this.move(ret.multiply_scalar(factor_self * -1));
+		}
+
+		// return factor
 		return ret;
 	},
 	
@@ -2071,6 +2265,63 @@ SSCD.CompositeShape.prototype = {
 // this will fill the missing functions from parent, but will not replace functions existing in child.
 SSCD.extend(SSCD.Shape.prototype, SSCD.CompositeShape.prototype);
 
+// FILE: shapes/capsule.js
+
+/*
+* a special shape made from multiple shapes combined together
+* Author: Ronen Ness, 2015
+*/
+
+
+// set namespace
+var SSCD = SSCD || {};
+
+// create a capsule shape. implemented by a composite-shape with two circles and a rectangle.
+// position - optional starting position (vector)
+// size - size in pixels (vector)
+// standing - if true, capsule will be standing. else, will lie down. (default: true)
+SSCD.Capsule = function (position, size, standing)
+{
+	// call init chain
+	this.init();
+	
+	// default standing
+	if (standing === undefined) standing = true;
+	
+	// create objects
+	objects = [];
+	if (standing)
+	{
+		size = size.clone();
+		size.y -= size.x;
+		objects.push(new SSCD.Rectangle(new SSCD.Vector(-size.x * 0.5, -size.y * 0.5), size));
+		objects.push(new SSCD.Circle(new SSCD.Vector(0, -size.y * 0.5), size.x * 0.5));
+		objects.push(new SSCD.Circle(new SSCD.Vector(0, size.y * 0.5), size.x * 0.5));
+	}
+	else
+	{
+		size = size.clone();
+		size.y -= size.x;
+		objects.push(new SSCD.Rectangle(new SSCD.Vector(-size.y * 0.5, -size.x * 0.5), size.flip()));
+		objects.push(new SSCD.Circle(new SSCD.Vector(-size.y * 0.5, 0), size.x * 0.5));
+		objects.push(new SSCD.Circle(new SSCD.Vector(size.y * 0.5, 0), size.x * 0.5));
+	}
+	
+	// init composite shape
+	this.__init_comp_shape(position, objects);
+};
+
+// set Rectangle methods
+SSCD.Capsule.prototype = {
+	
+	__type: "capsule",
+	
+};
+
+// inherit from CompositeShape class.
+// this will fill the missing functions from parent, but will not replace functions existing in child.
+SSCD.extend(SSCD.CompositeShape.prototype, SSCD.Capsule.prototype);
+
 // FILE: shapes/shapes_collider.js
 
 /*
@@ -2094,11 +2345,11 @@ SSCD.CollisionManager = {
 		}
 				
 		// composite shape collision
-		if (a instanceof SSCD.CompositeShape)
+		if (a instanceof SSCD.CompositeShape || a instanceof SSCD.Capsule)
 		{
 			return this._test_collision_composite_shape(a, b);
 		}
-		if (b instanceof SSCD.CompositeShape)
+		if (b instanceof SSCD.CompositeShape || b instanceof SSCD.Capsule)
 		{
 			return this._test_collision_composite_shape(b, a);
 		}
