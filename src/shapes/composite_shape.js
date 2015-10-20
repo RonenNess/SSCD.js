@@ -14,28 +14,33 @@ SSCD.CompositeShape = function (position, objects)
 {
 	// call init chain
 	this.init();
-	
-	// create empty list of shapes
-	this.__shapes = [];
-	
-	// default position
-	position = position || SSCD.Vector.ZERO;
-	this.set_position(position);
-
-	// add objects if provided
-	if (objects)
-	{
-		for (var i = 0; i < objects.length; ++i)
-		{
-			this.add(objects[i]);
-		}
-	}
+	this.__init_comp_shape(position, objects);
 };
 
 // set Rectangle methods
 SSCD.CompositeShape.prototype = {
 	
 	__type: "composite-shape",
+	
+	// init the composite shape
+	__init_comp_shape: function(position, objects)
+	{
+		// create empty list of shapes
+		this.__shapes = [];
+		
+		// default position
+		position = position || SSCD.Vector.ZERO;
+		this.set_position(position);
+
+		// add objects if provided
+		if (objects)
+		{
+			for (var i = 0; i < objects.length; ++i)
+			{
+				this.add(objects[i]);
+			}
+		}
+	},
 	
 	// render (for debug purposes)
 	render: function (ctx, camera_pos)
@@ -49,17 +54,26 @@ SSCD.CompositeShape.prototype = {
 	
 	// repeal an object from this object.
 	// here we iterate over sub-object and repeal only from the ones we collide with
-	repel: function(obj, force, iterations)
+	repel: function(obj, force, iterations, factor_self, factor_other)
 	{
+		// do repel from independant shapes inside this composite shape
 		var ret = SSCD.Vector.ZERO.clone();
 		for (var i = 0; i < this.__shapes.length; ++i)
 		{
 			var shape = this.__shapes[i].shape;
 			if (shape.test_collide_with(obj))
 			{
-				ret.add_self(shape.repel(obj, force, iterations));
+				ret.add_self(shape.repel(obj, force, iterations, 0, factor_other));
 			}
 		}
+
+		// if have factor to move self, apply it
+		if ((factor_self || 0) !== 0)
+		{
+			this.move(ret.multiply_scalar(factor_self * -1));
+		}
+
+		// return factor
 		return ret;
 	},
 	

@@ -16,17 +16,20 @@ def minifiy_js(code):
 full_code = ""
 for file in [
         "license.js",
-        "world.js",
+        "sscd.js",
 	"utils/math.js",
 	"utils/vector.js",
 	"utils/extend.js",
 	"utils/aabb.js",
+        "world.js",
+        "tilemap.js",
 	"shapes/shape.js",
 	"shapes/circle.js",
 	"shapes/rectangle.js",
 	"shapes/line.js",
 	"shapes/lines_strip.js",
 	"shapes/composite_shape.js",
+        "shapes/capsule.js",
 	"shapes/shapes_collider.js",
         "packages/npm.js"]:
     with open(os.path.join("src", file), 'r') as src:

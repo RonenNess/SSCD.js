@@ -17,12 +17,19 @@
 	
 	<!-- example info -->
 	<div style="position:fixed; z-index: 1000">
-		<h1 style="position:fixed; left:10px; top:10px; color:#555;">SSCD Example I</h1>
-		<p style="position:fixed; left:10px; top:60px; color:#555; font-size:160%">
-		In this example we see different shapes lying around.<br />
+		<h1 style="position:fixed; left:10px; top:10px; color:#555;">SSCD Example III</h1>
+		<p style="position:fixed; left:10px; top:60px; color:#555; font-size:120%">
+		In this example we use collision tags.<br />
 		Click on a shape to pick it up, and click again to drop it. <br /> <br />
-		At the panel below you will see which shapes currently collide with the shape you are currently dragging.
+		At the panel below you will see which shapes currently collide with the shape you are dragging. <br />
+		<b>Shapes will only collide with shapes sharing the same tag(s)! Different colors indicate different tags.</b>
 		</p>
+		
+		<!-- show shapes tags -->
+		<p style="position:fixed; left:150px; top:220px; color:#555; font-size:120%"><b>AIR</b></p>
+		<p style="position:fixed; left:500px; top:220px; color:#555; font-size:120%"><b>WATER</b></p>
+		<p style="position:fixed; left:750px; top:220px; color:#555; font-size:120%"><b>FIRE</b></p>
+		<p style="position:fixed; left:890px; top:220px; color:#555; font-size:120%"><b>ALL ELEMENTS</b></p>
 		
 		<!-- bottom panel to show info -->
 		<input id="text-panel" style="position:fixed; left: 0px; padding-left: 10px; bottom: 10px; z-index: 1000; font-size: 160%; width: 100%" value="" readonly></input>
@@ -63,14 +70,16 @@
 		var world = new SSCD.World({grid_size: 200});
 		
 		// add test objects to world
-		world.add(new SSCD.Circle(new SSCD.Vector(100, 380), 75));
-		world.add(new SSCD.Rectangle(new SSCD.Vector(210, 300), new SSCD.Vector(190, 150)));
-		world.add(new SSCD.Line(new SSCD.Vector(450, 300), new SSCD.Vector(100, 120)));
+		world.add(new SSCD.Circle(new SSCD.Vector(100, 380), 75)).set_collision_tags("air");
+		world.add(new SSCD.Rectangle(new SSCD.Vector(210, 300), new SSCD.Vector(190, 150))).set_collision_tags("air");
+		world.add(new SSCD.Line(new SSCD.Vector(450, 300), new SSCD.Vector(100, 120))).set_collision_tags("water");
 		world.add(new SSCD.LineStrip(new SSCD.Vector(580, 300), 
-									[new SSCD.Vector(100, 0), new SSCD.Vector(0, 100), new SSCD.Vector(100, 100)], true));
+									[new SSCD.Vector(100, 0), new SSCD.Vector(0, 100), new SSCD.Vector(100, 100)], true)).set_collision_tags("water");
 		world.add(new SSCD.LineStrip(new SSCD.Vector(720, 300), 
-									[new SSCD.Vector(100, 0), new SSCD.Vector(0, 100), new SSCD.Vector(100, 100), new SSCD.Vector(20, -50)], false));						
-		var comp = world.add(new SSCD.CompositeShape(new SSCD.Vector(950, 320)));
+									[new SSCD.Vector(100, 0), new SSCD.Vector(0, 100), new SSCD.Vector(100, 100), new SSCD.Vector(20, -50)], false)).set_collision_tags("fire");						
+		world.add(new SSCD.LineStrip(new SSCD.Vector(760, 450), 
+									[new SSCD.Vector(70, 0), new SSCD.Vector(20, 70), new SSCD.Vector(-100, 50), new SSCD.Vector(20, -50)], false)).set_collision_tags("fire");
+		var comp = world.add(new SSCD.CompositeShape()).set_position(new SSCD.Vector(950, 370)).set_collision_tags(["air", "water", "fire"]);
 		comp.add(new SSCD.Circle(new SSCD.Vector(0, 0), 100));
 		comp.add(new SSCD.Circle(new SSCD.Vector(70, 0), 60));
 		comp.add(new SSCD.Rectangle(new SSCD.Vector(0, 80), new SSCD.Vector(90, 90)));
@@ -121,7 +130,7 @@
 				// if we point on a shape:
 				if (currently_point_on)
 				{
-					text_panel.value = "Click to pickup shape: '" + currently_point_on.get_name() + "'";
+					text_panel.value = "Click to pickup shape with tags: '" + currently_point_on.get_collision_tags() + "'";
 				}
 				// else:
 				else
@@ -134,18 +143,18 @@
 			{
 				// check collision for selected shape
 				var collide_with = [];
-				if (world.test_collision(selected_shape, undefined, collide_with))
+				if (world.test_collision(selected_shape, selected_shape.get_collision_tags(), collide_with))
 				{
-					text_panel.value = "'" + selected_shape.get_name() + "' collide with: ";
+					text_panel.value = "'" + selected_shape.get_collision_tags() + "' collide with: ";
 					for (var i = 0; i < collide_with.length; ++i)
 					{
-						text_panel.value += collide_with[i].get_name() + ", ";
+						text_panel.value += "'" + collide_with[i].get_collision_tags() + "', ";
 					}
 				}
 				// if don't have collision:
 				else
 				{
-					text_panel.value = "'" + selected_shape.get_name() + "' don't collide with anything.";
+					text_panel.value = "'" + selected_shape.get_collision_tags() + "' don't collide with anything.";
 				}
 			}
 		}, 1000/60);

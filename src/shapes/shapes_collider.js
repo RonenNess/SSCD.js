@@ -19,11 +19,11 @@ SSCD.CollisionManager = {
 		}
 				
 		// composite shape collision
-		if (a instanceof SSCD.CompositeShape)
+		if (a instanceof SSCD.CompositeShape || a instanceof SSCD.Capsule)
 		{
 			return this._test_collision_composite_shape(a, b);
 		}
-		if (b instanceof SSCD.CompositeShape)
+		if (b instanceof SSCD.CompositeShape || b instanceof SSCD.Capsule)
 		{
 			return this._test_collision_composite_shape(b, a);
 		}

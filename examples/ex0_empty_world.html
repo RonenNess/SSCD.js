@@ -1,0 +1,59 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<title>SSCD - Empty World</title>
+
+	<script src="../dist/dev/sscd.dev.js"></script>
+	
+</head>
+
+<body style="padding:0; margin:0; overflow: hidden;">
+
+	<!-- main canvas we render on -->
+	<canvas id="mainCanvas" class="main" width="1280" height="1024" style="padding:0; margin:0; z-index:1000; position:fixed;"></canvas>
+	
+	<!-- example info -->
+	<div style="position:fixed; z-index: 1000">
+		<h1 style="position:fixed; left:10px; top:10px; color:#555;">SSCD - Empty World</h1>
+		<p style="position:fixed; left:10px; top:60px; color:#555; font-size:160%">
+		This example doesn't do much, just create an empty world and debug-render it.
+		</p>
+	</div>
+	
+	<script>
+	
+		// get canvas and 2d context
+		var canvas = document.getElementById("mainCanvas");
+		var ctx = canvas.getContext('2d');
+	
+		// resize canvas to fit fullscreen
+		function resizeCanvas() {
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+		}
+		window.addEventListener('resize', resizeCanvas, false);
+		resizeCanvas();
+
+		// create a collision world with grid size of 200
+		var world = new SSCD.World({grid_size: 200});
+		
+		// main loop that will render objects
+		setInterval(function ()
+		{
+			// clear canvas
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			
+			// render collision world
+			world.render(canvas);
+			
+		}, 1000/60);
+		
+	</script>
+
+</body>
+
+</html>
+

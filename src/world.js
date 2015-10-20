@@ -8,7 +8,7 @@
 var SSCD = SSCD || {};
 
 // version identifier
-SSCD.VERSION = 1.3;
+SSCD.VERSION = 1.4;
 
 // a collision world. you create an instance of this class and add bodies to it to check collision.
 //
@@ -20,25 +20,32 @@ SSCD.VERSION = 1.3;
 //								less accurate collision around the edges. set to 0 if you want to always update grid (useful if all your moving objects move fast)
 SSCD.World = function (params) {
 	
-	// set defaults
-	params = params || {};
-	params.grid_size = params.grid_size || 512;
-	params.grid_error = params.grid_error !== undefined ? params.grid_error : 2;
-
-	// create grid and set params
-	this.__grid = {};
-	this.__params = params;
+	this.__init_world(params);
 	
-	// all the shapes currently in this world
-	this.__all_shapes = {};
-
-	// create the empty collision flags dictionary
-	this.__collision_tags = {};
-	this.__next_coll_tag = 0;
 };
 
 // collision world prototype
 SSCD.World.prototype = {
+
+	// init the world
+	__init_world: function(params)
+	{	
+		// set defaults
+		params = params || {};
+		params.grid_size = params.grid_size || 512;
+		params.grid_error = params.grid_error !== undefined ? params.grid_error : 2;
+
+		// create grid and set params
+		this.__grid = {};
+		this.__params = params;
+		
+		// all the shapes currently in this world
+		this.__all_shapes = {};
+
+		// create the empty collision flags dictionary
+		this.__collision_tags = {};
+		this.__next_coll_tag = 0;	
+	},
 
 	// define a new collision tag
 	__create_collision_tag: function (name)

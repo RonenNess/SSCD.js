@@ -35,6 +35,19 @@ SSCD.Vector.prototype = {
 		this.y = vector.y;
 	},
 	
+	// flip between x and y (return without changing self)
+	flip: function()
+	{
+		return new SSCD.Vector(this.y, this.x);
+	},
+	
+	// flip between x and y (change self values)
+	flip_self: function()
+	{
+		this.y = [this.x, this.x = this.y][0];
+		return this;
+	},
+	
 	// make negative (return without changing self)
 	negative: function()
 	{
