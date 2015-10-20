@@ -425,6 +425,7 @@ Note: building this version before attempting to become npm compliance.
 - Added capsule shape.
 - Added tilemap world.
 - Fixed bug that factor_self and factor_other not working in composite-shape repel().
+- Added option to set collision tags to null for quick reset.
 - Docs update.
 	
 ## License

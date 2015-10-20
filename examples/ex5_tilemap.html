@@ -20,7 +20,8 @@
 	<div style="position:fixed; z-index: 1000">
 		<h1 style="position:fixed; left:10px; top:10px; color:#555;">SSCD - Tilemap</h1>
 		<p style="position:fixed; left:10px; top:60px; color:#555; font-size:160%">
-		This example shows the usage of the tilemap world type; a special collision world designed for tile-based 2d games.
+		This example shows the usage of the tilemap world type; a special collision world designed for tile-based 2d games. <br />
+		Use arrows to move inside the maze.
 		</p>
 	</div>
 	
@@ -31,19 +32,26 @@
 		var ctx = canvas.getContext('2d');
 	
 		// resize canvas to fit fullscreen
+		var screen_size;
 		function resizeCanvas() {
 			canvas.width = window.innerWidth;
 			canvas.height = window.innerHeight;
+			screen_size = new SSCD.Vector(canvas.width, canvas.height);
 		}
 		window.addEventListener('resize', resizeCanvas, false);
 		resizeCanvas();
 
 		// create a tilemap collision world with tile size of 128x128
-		var world = new SSCD.TilemapWorld(128);
+		var tile_size = 128;
+		var world = new SSCD.TilemapWorld(tile_size);
 		
 		// create random maze and set it
 		var map = create_maze(100, 100);
 		world.set_from_matrix(map);
+		
+		// create player shape
+		var player = new SSCD.Circle(new SSCD.Vector(tile_size * 1.5, tile_size * 1.5), 32);
+		player.set_debug_render_colors("yellow", "black");
 		
 		// create a random level
 		var tiles = [];
@@ -56,14 +64,68 @@
 			}
 		}
 		
+		// keyboard input
+		var key_down, key_up, key_left, key_right;
+		function checkKey(e, is_down) {
+
+			e = e || window.event;
+
+			if (e.keyCode == '38') {
+				key_up = is_down;
+			}
+			else if (e.keyCode == '40') {
+				key_down = is_down;
+			}
+			else if (e.keyCode == '37') {
+			   key_left = is_down;
+			}
+			else if (e.keyCode == '39') {
+			   key_right = is_down;
+			}
+
+		}
+		document.onkeydown = function(e) {checkKey(e, true);};
+		document.onkeyup = function(e) {checkKey(e, false);};
+		
 		// main loop that will render objects
 		setInterval(function ()
 		{
 			// clear canvas
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			
-			// render collision world
-			world.render(canvas);
+			// render collision world and player
+			var camera = player.get_position().sub(screen_size.multiply_scalar(0.5));
+			if (camera.x < 0) camera.x = 0;
+			if (camera.y < 0) camera.y = 0;
+			world.render(canvas, camera);
+			player.render(ctx, camera);
+			
+			// move player
+			var speed = 10;
+			if (key_down)
+			{
+				player.move(new SSCD.Vector(0, speed));
+			}
+			if (key_up)
+			{
+				player.move(new SSCD.Vector(0, -speed));
+			}
+			if (key_left)
+			{
+				player.move(new SSCD.Vector(-speed, 0));
+			}
+			if (key_right)
+			{
+				player.move(new SSCD.Vector(speed, 0));
+			}
+			
+			// prevent penetration
+			var walls = [];
+			world.test_collision(player, undefined, walls);
+			for (var i = 0; i < walls.length; ++i)
+			{
+				var rep = walls[i].repel(player, 2, 10);
+			}
 			
 		}, 1000/60);
 		
