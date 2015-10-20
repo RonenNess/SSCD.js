@@ -380,6 +380,32 @@ monster.repel(player_shape, 10, 5, player_mass / monster_mass, monster_mass / pl
 
 Note that while this method is good enough to get you started, for a serious game you might want to consider using a fully featured physics engine. If you start thinking about masses, friction, velocity etc, switch to physics...
 
+### Tilemap
+
+Most 2d rpg games are based on a simple tilemap, which is implemented by a 2d matrix of tiles that can either block or not.
+
+For this purpose SSCD comes with a built-in tilemap world, which is a sub-class of the collision world but with extra tilemap helper functions and optimizations.
+
+You create a tilemap world like this:
+
+```javascript
+var world = new SSCD.TilemapWorld(tile_size);
+```
+
+The tilemap world has the same API as the default collision world, with the following additions:
+
+##### .set_from_matrix(matrix)
+
+This function set the tilemap from a given matrix (array of arrays), where every cell is either 0 or 1 (0 = no collision/floor, 1 = collision/walls).
+
+##### .set_tile(index, collision, tags)
+
+Set the state of a single tile. Index is the tile index (vector), collision is a boolean (should collide or not), and tags are optional tags to set to tile.
+
+##### .get_tile(index)
+
+Get the shape of a given tile, or undefined if this tile is not collideable.
+
 ### Memory usage
 
 SSCD is very memory-efficient, and should not cause any memory-related issues.
