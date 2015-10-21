@@ -35,6 +35,7 @@ The following are the key features of SSCD:
 - Can easily handle massive worlds with lots of shapes.
 - Collision filters and tags.
 - Built-in debug rendering to show the collision world with all the objects in it (+ camera support).
+- Built-in tilemap collision world for 2d rpg games.
 - Lightweight minimalistic API.
 
 SSCD should work on all modern browsers, and its tested and confirmed on Chrome, FireFox, and Internet Explorer 11.
