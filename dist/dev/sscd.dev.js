@@ -1854,8 +1854,8 @@ SSCD.Line.prototype = {
 	build_aabb: function ()
 	{
 		var pos = new SSCD.Vector(0, 0);
-		pos.x = this.__dest.x > 0 ? this.__position.x : this.__position.x - this.__dest.x;
-		pos.y = this.__dest.y > 0 ? this.__position.y : this.__position.y - this.__dest.y;
+		pos.x = this.__dest.x > 0 ? this.__position.x : this.__position.x + this.__dest.x;
+		pos.y = this.__dest.y > 0 ? this.__position.y : this.__position.y + this.__dest.y;
 		var size = this.__dest.apply(Math.abs);
 		return new SSCD.AABB(pos, size);
 	},
