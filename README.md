@@ -454,6 +454,15 @@ Note: building this version before attempting to become npm compliance.
 - Fixed bug that factor_self and factor_other not working in composite-shape repel().
 - Added option to set collision tags to null for quick reset.
 - Docs update.
+
+### 1.5
+
+- Minor optimization in collision detection by ditching "instanceof"
+- Added field-of-view test.
+- Fixed bug with line collision when line goes backwards.
+- Some docs update.
+- Fixed Vector.from_angle() to be really angle and not radian. added radian in addition.
+- All code had been beautified.
 	
 ## License
 SSCD is provided under the zlib-license, and is absolutely free for use for educational & commercial purposes.
