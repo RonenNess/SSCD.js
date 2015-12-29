@@ -277,14 +277,14 @@ SSCD.World.prototype = {
 
 		// create a circle and check basic collision with it
 		var circle = new SSCD.Circle(position, distance);
-		this.__test_collision_shape(circle, collision_tags, out_list, ret_objs_count);
+		this.__test_collision_shape(circle, collision_tags, out_list);
 
 		// now iterate over collided objects and check angle
 		for (var i = out_list.length - 1; i >= 0; --i) {
 			// get angle between source position and the body
 			var angle = position.angle_from(out_list[i].__position);
 			if (SSCD.Math.angles_dis(direction, angle) > fov_angle) {
-				ret.splice(i, 1);
+				out_list.splice(i, 1);
 			}
 		}
 

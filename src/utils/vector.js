@@ -187,13 +187,18 @@ SSCD.Vector.prototype = {
 		return this;
 	},
 
-	// get angle from vector
-	from_angle: function(angle) {
-		this.x = Math.cos(angle);
-		this.y = Math.sin(angle);
+	// create vector from radian
+	from_radian: function(rad) {
+		this.x = Math.cos(rad);
+		this.y = Math.sin(rad);
 		return this;
 	},
 
+	// create vector from radian
+	from_angle: function(angle) {
+		return this.from_radian(SSCD.Math.to_radians(angle));
+	},
+	
 	// apply a function on x and y components on self
 	apply_self: function(func) {
 		this.x = func(this.x);

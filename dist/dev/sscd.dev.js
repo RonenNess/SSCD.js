@@ -344,13 +344,18 @@ SSCD.Vector.prototype = {
 		return this;
 	},
 
-	// get angle from vector
-	from_angle: function(angle) {
-		this.x = Math.cos(angle);
-		this.y = Math.sin(angle);
+	// create vector from radian
+	from_radian: function(rad) {
+		this.x = Math.cos(rad);
+		this.y = Math.sin(rad);
 		return this;
 	},
 
+	// create vector from radian
+	from_angle: function(angle) {
+		return this.from_radian(SSCD.Math.to_radians(angle));
+	},
+	
 	// apply a function on x and y components on self
 	apply_self: function(func) {
 		this.x = func(this.x);
@@ -776,14 +781,14 @@ SSCD.World.prototype = {
 
 		// create a circle and check basic collision with it
 		var circle = new SSCD.Circle(position, distance);
-		this.__test_collision_shape(circle, collision_tags, out_list, ret_objs_count);
+		this.__test_collision_shape(circle, collision_tags, out_list);
 
 		// now iterate over collided objects and check angle
 		for (var i = out_list.length - 1; i >= 0; --i) {
 			// get angle between source position and the body
 			var angle = position.angle_from(out_list[i].__position);
 			if (SSCD.Math.angles_dis(direction, angle) > fov_angle) {
-				ret.splice(i, 1);
+				out_list.splice(i, 1);
 			}
 		}
 
