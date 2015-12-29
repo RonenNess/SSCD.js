@@ -127,7 +127,32 @@ SSCD.Math.line_intersects = function (p0, p1, p2, p3) {
 // return if point is on given line
 SSCD.Math.is_on_line = function (v, l1, l2) {
 	return SSCD.Math.distance_to_line(v, l1, l2) <= 5;
-};
+};
+
+
+// return shortest, positive distance between two given angles.
+// for example:
+//  50, 100 will return 50
+//  350, 10 will return 20
+// angles shoule be in 0-360 values (but negatives and >360 allowed as well)
+SSCD.Math.angles_dis = function(a0, a1) {
+
+	// convert to radians
+	a0 = SSCD.Math.to_radians(a0);
+	a1 = SSCD.Math.to_radians(a1);
+
+	// get distance
+	var max = Math.PI*2;
+	var da = (a1 - a0) % max;
+	var distance = 2*da % max - da;
+
+	// convert back to degrees
+	distance = SSCD.Math.to_degrees(distance);
+
+	// return abs value
+	return Math.abs(distance);
+};
+
 
 // FILE: utils/vector.js
 
@@ -794,11 +819,11 @@ SSCD.World.prototype = {
 	},
 	
 	// test collision with vector or object
-	// obj: object to check collision with, can be either Vector (for point collision) or any collision shape.
-	// collision_tags: optional string or list of strings of tags to match collision with. if undefined will accept all tags
-	// out_list: optional output list. if provided, will be filled with all objects collided with. note: collision is more efficient if not provided.
-	// ret_objs_count: if provided, will limit returned objects to given count.
-	// return true if collided with anything, false otherwise.
+	// @param obj: object to check collision with, can be either Vector (for point collision) or any collision shape.
+	// @param collision_tags: optional string or list of strings of tags to match collision with. if undefined will accept all tags
+	// @param out_list: optional output list. if provided, will be filled with all objects collided with. note: collision is more efficient if not provided.
+	// @param ret_objs_count: if provided, will limit returned objects to given count.
+	// @return true if collided with anything, false otherwise.
 	test_collision: function (obj, collision_tags, out_list, ret_objs_count)
 	{
 		// default collision flags
@@ -814,6 +839,43 @@ SSCD.World.prototype = {
 		{
 			return this.__test_collision_shape(obj, collision_tags, out_list, ret_objs_count);
 		}
+	},
+	
+	
+	// test collision with a field of view.
+	// a field of view is basically a pizza-like shape starting from the center.
+	// @param position: source position (vector).
+	// @param distance: fov distance.
+	// @param direction: look-at direction in degrees (0 = looking right, 90 = looking down, etc.).
+	// @param fov_angle: angle range in degrees.
+	// @param collision_tags: optional string or list of strings of tags to match collision with. if undefined will accept all tags
+	// @param out_list: optional output list. if provided, will be filled with all objects collided with. note: collision is more efficient if not provided.
+	// @return true if collided with anything, false otherwise.
+	test_fov: function (position, distance, direction, fov_angle, collision_tags, out_list)
+	{
+		// default collision flags
+		collision_tags = this.__get_tags_value(collision_tags);
+		
+		// default out-list if not provided
+		out_list = out_list || [];
+		
+		// create a circle and check basic collision with it
+		var circle = new SSCD.Circle(position, distance);
+		this.__test_collision_shape(circle, collision_tags, out_list, ret_objs_count);
+		
+		// now iterate over collided objects and check angle
+		for (var i = out_list.length-1; i >= 0 ; --i)
+		{
+			// get angle between source position and the body
+			var angle = position.angle_from(out_list[i].__position);
+			if (SSCD.Math.angles_dis(direction, angle) > fov_angle)
+			{
+				ret.splice(i, 1);
+			}
+		}
+		
+		// return if got collision
+		return out_list.length > 0;
 	},
 	
 	// test collision for given point
@@ -2353,49 +2415,6 @@ SSCD.Capsule.prototype = {
 // this will fill the missing functions from parent, but will not replace functions existing in child.
 SSCD.extend(SSCD.CompositeShape.prototype, SSCD.Capsule.prototype);
 
-// FILE: shapes/fov.js
-
-/*
-* A FOV collision shape.
-* FOV is a special pizza-like shaped used to do stuff like field of view collision or range.
-* Basically FOV is a circle collision that only check angle range (imagine a running radar).
-* Author: Ronen Ness, 2015
-*/
-
-// define the fov shape.
-// @param position - center position (vector).
-// @param radius - circle radius (integer).
-// @param direction - degree, fov look-at direction.
-// @param range - degree, the vof angle range.
-SSCD.FOV = function (position, radius, direction, range)
-{
-	// call init chain
-	this.init();
-	
-	// set radius and size
-	this.__radius = radius;
-	this.__size = new SSCD.Vector(radius, radius).multiply_scalar_self(2);
-	this.__direction = direction;
-	this.__range = range;
-
-	// set starting position
-	this.set_position(position);
-};
-
-// FOV prototype
-SSCD.FOV.prototype = {
-	
-	// set type and collision type
-	// note: fov collide like circle, but we add the extra angle check after the basic collision.
-	__type: "fov",
-	__collision_type: "circle",
-
-};
-
-// inherit from basic shape class.
-// this will fill the missing functions from parent, but will not replace functions existing in child.
-SSCD.extend(SSCD.Circle.prototype, SSCD.FOV.prototype);
-
 // FILE: shapes/shapes_collider.js
 
 /*
@@ -2409,7 +2428,8 @@ var SSCD = SSCD || {};
 
 SSCD.CollisionManager = {
 	
-	// test collision between two objects, a and b, where they can be vectors or any valid collision shape.
+	// test collision between two objects, a and b.
+	// @param a, b - instances to check collision. can be any shape or vector.
 	test_collision: function (a, b)
 	{
 		// vector-vector collision

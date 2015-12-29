@@ -30,7 +30,6 @@ for file in [
 		"shapes/lines_strip.js",
 		"shapes/composite_shape.js",
 		"shapes/capsule.js",
-		"shapes/fov.js",
 		"shapes/shapes_collider.js",
 		"sscd_close.js",
 		"packages/npm.js"]:

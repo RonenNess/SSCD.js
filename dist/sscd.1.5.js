@@ -127,7 +127,32 @@ SSCD.Math.line_intersects = function (p0, p1, p2, p3) {
 // return if point is on given line
 SSCD.Math.is_on_line = function (v, l1, l2) {
 	return SSCD.Math.distance_to_line(v, l1, l2) <= 5;
-};
+};
+
+
+// return shortest, positive distance between two given angles.
+// for example:
+//  50, 100 will return 50
+//  350, 10 will return 20
+// angles shoule be in 0-360 values (but negatives and >360 allowed as well)
+SSCD.Math.angles_dis = function(a0, a1) {
+
+	// convert to radians
+	a0 = SSCD.Math.to_radians(a0);
+	a1 = SSCD.Math.to_radians(a1);
+
+	// get distance
+	var max = Math.PI*2;
+	var da = (a1 - a0) % max;
+	var distance = 2*da % max - da;
+
+	// convert back to degrees
+	distance = SSCD.Math.to_degrees(distance);
+
+	// return abs value
+	return Math.abs(distance);
+};
+
 
 // FILE: utils/vector.js
 
@@ -532,13 +557,6 @@ SSCD.AABB.prototype = {
 * Author: Ronen Ness, 2015
 */
 
-
-// set namespace
-var SSCD = SSCD || {};
-
-// version identifier
-SSCD.VERSION = 1.4;
-
 // a collision world. you create an instance of this class and add bodies to it to check collision.
 //
 // params is an optional dictionary with the following optional settings:
@@ -801,11 +819,11 @@ SSCD.World.prototype = {
 	},
 	
 	// test collision with vector or object
-	// obj: object to check collision with, can be either Vector (for point collision) or any collision shape.
-	// collision_tags: optional string or list of strings of tags to match collision with. if undefined will accept all tags
-	// out_list: optional output list. if provided, will be filled with all objects collided with. note: collision is more efficient if not provided.
-	// ret_objs_count: if provided, will limit returned objects to given count.
-	// return true if collided with anything, false otherwise.
+	// @param obj: object to check collision with, can be either Vector (for point collision) or any collision shape.
+	// @param collision_tags: optional string or list of strings of tags to match collision with. if undefined will accept all tags
+	// @param out_list: optional output list. if provided, will be filled with all objects collided with. note: collision is more efficient if not provided.
+	// @param ret_objs_count: if provided, will limit returned objects to given count.
+	// @return true if collided with anything, false otherwise.
 	test_collision: function (obj, collision_tags, out_list, ret_objs_count)
 	{
 		// default collision flags
@@ -821,6 +839,43 @@ SSCD.World.prototype = {
 		{
 			return this.__test_collision_shape(obj, collision_tags, out_list, ret_objs_count);
 		}
+	},
+	
+	
+	// test collision with a field of view.
+	// a field of view is basically a pizza-like shape starting from the center.
+	// @param position: source position (vector).
+	// @param distance: fov distance.
+	// @param direction: look-at direction in degrees (0 = looking right, 90 = looking down, etc.).
+	// @param fov_angle: angle range in degrees.
+	// @param collision_tags: optional string or list of strings of tags to match collision with. if undefined will accept all tags
+	// @param out_list: optional output list. if provided, will be filled with all objects collided with. note: collision is more efficient if not provided.
+	// @return true if collided with anything, false otherwise.
+	test_fov: function (position, distance, direction, fov_angle, collision_tags, out_list)
+	{
+		// default collision flags
+		collision_tags = this.__get_tags_value(collision_tags);
+		
+		// default out-list if not provided
+		out_list = out_list || [];
+		
+		// create a circle and check basic collision with it
+		var circle = new SSCD.Circle(position, distance);
+		this.__test_collision_shape(circle, collision_tags, out_list, ret_objs_count);
+		
+		// now iterate over collided objects and check angle
+		for (var i = out_list.length-1; i >= 0 ; --i)
+		{
+			// get angle between source position and the body
+			var angle = position.angle_from(out_list[i].__position);
+			if (SSCD.Math.angles_dis(direction, angle) > fov_angle)
+			{
+				ret.splice(i, 1);
+			}
+		}
+		
+		// return if got collision
+		return out_list.length > 0;
 	},
 	
 	// test collision for given point
@@ -1095,9 +1150,8 @@ SSCD.IllegalActionError.prototype = Error.prototype;
 * Author: Ronen Ness, 2015
 */
 
-
 // a collision world. you create an instance of this class and add bodies to it to check collision.
-//	@param tile_size: size, in pixels, of a single tile
+// @param tile_size: size, in pixels, of a single tile
 // @param additional_params: extra params. see SSCD.World for more info.
 SSCD.TilemapWorld = function (tile_size, additional_params) {
 	
@@ -1112,10 +1166,10 @@ SSCD.TilemapWorld = function (tile_size, additional_params) {
 // tilemap collision world
 SSCD.TilemapWorld.prototype = {
 
-	// set if a tile blocks or not
-	// @param index - the x and y index of the tile to set (vector)
-	// @param collision - true if to put a collision shape on this tile, false otherwise
-	// @param tags - optional tags to apply on tile, if collision is set to true (note: null to reset tags)
+	// set if a tile blocks or not.
+	// @param index - the x and y index of the tile to set (vector).
+	// @param collision - true if to put a collision shape on this tile, false otherwise.
+	// @param tags - optional tags to apply on tile, if collision is set to true (note: null to reset tags).
 	set_tile: function(index, collision, tags)
 	{
 		// if already have shape, get it
@@ -1133,23 +1187,30 @@ SSCD.TilemapWorld.prototype = {
 			return;
 		}
 		
-		// if got here it means we need to set collision / update tags for this tile
-		// first, check if need to create new collision shape
+		// if got here it means we need to set collision / update tags for this tile.
+		// first, check if need to create new collision shape.
 		if (shape === undefined)
 		{
+			// calc position and size of the shape
 			var tilesize = this.__params.grid_size;
-			shape = this.__add_tile_shape(new SSCD.Rectangle(index.multiply_scalar(tilesize), new SSCD.Vector(tilesize, tilesize)), index);
+			var position = index.multiply_scalar(tilesize);
+			var size = new SSCD.Vector(tilesize, tilesize);
+			
+			// create and add the shape
+			shape = this.__add_tile_shape(new SSCD.Rectangle(position, size), index);
 			this.__set_tile_shape(index, shape);
 		}
 		
-		// now update tags, if provided
+		// set collision tags
 		if (tags !== undefined)
 		{
 			shape.set_collision_tags(tags);
 		}
 	},
 	
-	// add collision tile (for internal usage)
+	// add collision tile (for internal usage).
+	// @param obj - object to add to the tile.
+	// @param index - tile index.
 	__add_tile_shape: function (obj, index)
 	{
 		
@@ -1178,8 +1239,8 @@ SSCD.TilemapWorld.prototype = {
 		return obj;
 	},
 	
-	// set tilemap from a matrix (array of arrays)
-	// @param matrix is the matrix to set, every 1 will be collision, every 0 will not collide. (note: true and false works too)
+	// set tilemap from a matrix (array of arrays).
+	// @param matrix is the matrix to set, every 1 will be collision, every 0 will not collide. (note: true and false works too).
 	set_from_matrix: function(matrix)
 	{
 		var index = new SSCD.Vector(0, 0);
@@ -1195,14 +1256,16 @@ SSCD.TilemapWorld.prototype = {
 		}
 	},
 	
-	// get the collision shape of a tile (or undefined if have no collision shape on this tile)
-	// @param index - the x and y index of the tile to get
+	// get the collision shape of a tile (or undefined if have no collision shape on this tile).
+	// @param index - the x and y index of the tile to get.
 	get_tile: function(index)
 	{
 		return this.__tiles[index.x + "_" + index.y];
 	},
 	
-	// set the collision shape of a tile
+	// set the collision shape of a tile.
+	// @param index - tile index.
+	// @param shape - shape to set.
 	__set_tile_shape: function(index, shape)
 	{
 		if (shape === null)
@@ -2365,7 +2428,8 @@ var SSCD = SSCD || {};
 
 SSCD.CollisionManager = {
 	
-	// test collision between two objects, a and b, where they can be vectors or any valid collision shape.
+	// test collision between two objects, a and b.
+	// @param a, b - instances to check collision. can be any shape or vector.
 	test_collision: function (a, b)
 	{
 		// vector-vector collision
