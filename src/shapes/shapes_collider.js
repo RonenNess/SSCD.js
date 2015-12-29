@@ -9,7 +9,8 @@ var SSCD = SSCD || {};
 
 SSCD.CollisionManager = {
 	
-	// test collision between two objects, a and b, where they can be vectors or any valid collision shape.
+	// test collision between two objects, a and b.
+	// @param a, b - instances to check collision. can be any shape or vector.
 	test_collision: function (a, b)
 	{
 		// vector-vector collision
@@ -19,135 +20,135 @@ SSCD.CollisionManager = {
 		}
 				
 		// composite shape collision
-		if (a instanceof SSCD.CompositeShape || a instanceof SSCD.Capsule)
+		if (a.__collision_type == "composite-shape")
 		{
 			return this._test_collision_composite_shape(a, b);
 		}
-		if (b instanceof SSCD.CompositeShape || b instanceof SSCD.Capsule)
+		if (b.__collision_type == "composite-shape")
 		{
 			return this._test_collision_composite_shape(b, a);
 		}
 		
 		// circle-vector collision
-		if (a instanceof SSCD.Vector && b instanceof SSCD.Circle)
+		if (a instanceof SSCD.Vector && b.__collision_type == "circle")
 		{
 			return this._test_collision_circle_vector(b, a);
 		}
-		if (a instanceof SSCD.Circle && b instanceof SSCD.Vector)
+		if (a.__collision_type == "circle" && b instanceof SSCD.Vector)
 		{
 			return this._test_collision_circle_vector(a, b);
 		}
 		
 		// circle-circle collision
-		if (a instanceof SSCD.Circle && b instanceof SSCD.Circle)
+		if (a.__collision_type == "circle" && b.__collision_type == "circle")
 		{
 			return this._test_collision_circle_circle(b, a);
 		}
 		
 		// circle-rectangle collision
-		if (a instanceof SSCD.Circle && b instanceof SSCD.Rectangle)
+		if (a.__collision_type == "circle" && b.__collision_type == "rectangle")
 		{
 			return this._test_collision_circle_rect(a, b);
 		}
-		if (a instanceof SSCD.Rectangle && b instanceof SSCD.Circle)
+		if (a.__collision_type == "rectangle" && b.__collision_type == "circle")
 		{
 			return this._test_collision_circle_rect(b, a);
 		}
 		
 		// circle-line collision
-		if (a instanceof SSCD.Circle && b instanceof SSCD.Line)
+		if (a.__collision_type == "circle" && b.__collision_type == "line")
 		{
 			return this._test_collision_circle_line(a, b);
 		}
-		if (a instanceof SSCD.Line && b instanceof SSCD.Circle)
+		if (a.__collision_type == "line" && b.__collision_type == "circle")
 		{
 			return this._test_collision_circle_line(b, a);
 		}
 		
 		// linestrip-line collision
-		if (a instanceof SSCD.LineStrip && b instanceof SSCD.Line)
+		if (a.__collision_type == "line-strip" && b.__collision_type == "line")
 		{
 			return this._test_collision_linestrip_line(a, b);
 		}
-		if (a instanceof SSCD.Line && b instanceof SSCD.LineStrip)
+		if (a.__collision_type == "line" && b.__collision_type == "line-strip")
 		{
 			return this._test_collision_linestrip_line(b, a);
 		}
 		
 		// circle-linestrip collision
-		if (a instanceof SSCD.Circle && b instanceof SSCD.LineStrip)
+		if (a.__collision_type == "circle" && b.__collision_type == "line-strip")
 		{
 			return this._test_collision_circle_linestrip(a, b);
 		}
-		if (a instanceof SSCD.LineStrip && b instanceof SSCD.Circle)
+		if (a.__collision_type == "line-strip" && b.__collision_type == "circle")
 		{
 			return this._test_collision_circle_linestrip(b, a);
 		}		
 	
 		// rect-vector collision
-		if (a instanceof SSCD.Vector && b instanceof SSCD.Rectangle)
+		if (a instanceof SSCD.Vector && b.__collision_type == "rectangle")
 		{
 			return this._test_collision_rect_vector(b, a);
 		}
-		if (a instanceof SSCD.Rectangle && b instanceof SSCD.Vector)
+		if (a.__collision_type == "rectangle" && b instanceof SSCD.Vector)
 		{
 			return this._test_collision_rect_vector(a, b);
 		}
 		
 		// rect-rect collision
-		if (a instanceof SSCD.Rectangle && b instanceof SSCD.Rectangle)
+		if (a.__collision_type == "rectangle" && b.__collision_type == "rectangle")
 		{
 			return this._test_collision_rect_rect(b, a);
 		}
 		
 		// line-strip with line-strip collision
-		if (a instanceof SSCD.LineStrip && b instanceof SSCD.LineStrip)
+		if (a.__collision_type == "line-strip" && b.__collision_type == "line-strip")
 		{
 			return this._test_collision_linestrip_linestrip(a, b);
 		}
 
 		// rect-line collision
-		if (a instanceof SSCD.Line && b instanceof SSCD.Rectangle)
+		if (a.__collision_type == "line" && b.__collision_type == "rectangle")
 		{
 			return this._test_collision_rect_line(b, a);
 		}
-		if (a instanceof SSCD.Rectangle && b instanceof SSCD.Line)
+		if (a.__collision_type == "rectangle" && b.__collision_type == "line")
 		{
 			return this._test_collision_rect_line(a, b);
 		}	
 		
 		// rect-linestrip collision
-		if (a instanceof SSCD.LineStrip && b instanceof SSCD.Rectangle)
+		if (a.__collision_type == "line-strip" && b.__collision_type == "rectangle")
 		{
 			return this._test_collision_rect_linestrip(b, a);
 		}
-		if (a instanceof SSCD.Rectangle && b instanceof SSCD.LineStrip)
+		if (a.__collision_type == "rectangle" && b.__collision_type == "line-strip")
 		{
 			return this._test_collision_rect_linestrip(a, b);
 		}	
 		
 		// line-line collision
-		if (a instanceof SSCD.Line && b instanceof SSCD.Line)
+		if (a.__collision_type == "line" && b.__collision_type == "line")
 		{
 			return this._test_collision_line_line(a, b);
 		}
 		
 		// vector-line collision
-		if (a instanceof SSCD.Line && b instanceof SSCD.Vector)
+		if (a.__collision_type == "line" && b instanceof SSCD.Vector)
 		{
 			return this._test_collision_vector_line(b, a);
 		}
-		if (a instanceof SSCD.Vector && b instanceof SSCD.Line)
+		if (a instanceof SSCD.Vector && b.__collision_type == "line")
 		{
 			return this._test_collision_vector_line(a, b);
 		}	
 		
 		// vector-linestrip collision
-		if (a instanceof SSCD.LineStrip && b instanceof SSCD.Vector)
+		if (a.__collision_type == "line-strip" && b instanceof SSCD.Vector)
 		{
 			return this._test_collision_vector_linestrip(b, a);
 		}
-		if (a instanceof SSCD.Vector && b instanceof SSCD.LineStrip)
+		if (a instanceof SSCD.Vector && b.__collision_type == "line-strip")
 		{
 			return this._test_collision_vector_linestrip(a, b);
 		}	
@@ -373,7 +374,7 @@ SSCD.CollisionManager = {
 		var comp_shapes = composite.get_shapes();
 		
 		// special case: other shape is a composite shape as well
-		if (other instanceof SSCD.CompositeShape)
+		if (other.__collision_type == "composite-shape")
 		{
 			var other_shapes = other.get_shapes();
 			for (var i = 0; i < comp_shapes.length; ++i)

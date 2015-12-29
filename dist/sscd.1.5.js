@@ -532,6 +532,13 @@ SSCD.AABB.prototype = {
 * Author: Ronen Ness, 2015
 */
 
+
+// set namespace
+var SSCD = SSCD || {};
+
+// version identifier
+SSCD.VERSION = 1.4;
+
 // a collision world. you create an instance of this class and add bodies to it to check collision.
 //
 // params is an optional dictionary with the following optional settings:
@@ -1088,8 +1095,9 @@ SSCD.IllegalActionError.prototype = Error.prototype;
 * Author: Ronen Ness, 2015
 */
 
+
 // a collision world. you create an instance of this class and add bodies to it to check collision.
-// @param tile_size: size, in pixels, of a single tile
+//	@param tile_size: size, in pixels, of a single tile
 // @param additional_params: extra params. see SSCD.World for more info.
 SSCD.TilemapWorld = function (tile_size, additional_params) {
 	
@@ -1104,10 +1112,10 @@ SSCD.TilemapWorld = function (tile_size, additional_params) {
 // tilemap collision world
 SSCD.TilemapWorld.prototype = {
 
-	// set if a tile blocks or not.
-	// @param index - the x and y index of the tile to set (vector).
-	// @param collision - true if to put a collision shape on this tile, false otherwise.
-	// @param tags - optional tags to apply on tile, if collision is set to true (note: null to reset tags).
+	// set if a tile blocks or not
+	// @param index - the x and y index of the tile to set (vector)
+	// @param collision - true if to put a collision shape on this tile, false otherwise
+	// @param tags - optional tags to apply on tile, if collision is set to true (note: null to reset tags)
 	set_tile: function(index, collision, tags)
 	{
 		// if already have shape, get it
@@ -1125,30 +1133,23 @@ SSCD.TilemapWorld.prototype = {
 			return;
 		}
 		
-		// if got here it means we need to set collision / update tags for this tile.
-		// first, check if need to create new collision shape.
+		// if got here it means we need to set collision / update tags for this tile
+		// first, check if need to create new collision shape
 		if (shape === undefined)
 		{
-			// calc position and size of the shape
 			var tilesize = this.__params.grid_size;
-			var position = index.multiply_scalar(tilesize);
-			var size = new SSCD.Vector(tilesize, tilesize);
-			
-			// create and add the shape
-			shape = this.__add_tile_shape(new SSCD.Rectangle(position, size), index);
+			shape = this.__add_tile_shape(new SSCD.Rectangle(index.multiply_scalar(tilesize), new SSCD.Vector(tilesize, tilesize)), index);
 			this.__set_tile_shape(index, shape);
 		}
 		
-		// set collision tags
+		// now update tags, if provided
 		if (tags !== undefined)
 		{
 			shape.set_collision_tags(tags);
 		}
 	},
 	
-	// add collision tile (for internal usage).
-	// @param obj - object to add to the tile.
-	// @param index - tile index.
+	// add collision tile (for internal usage)
 	__add_tile_shape: function (obj, index)
 	{
 		
@@ -1177,8 +1178,8 @@ SSCD.TilemapWorld.prototype = {
 		return obj;
 	},
 	
-	// set tilemap from a matrix (array of arrays).
-	// @param matrix is the matrix to set, every 1 will be collision, every 0 will not collide. (note: true and false works too).
+	// set tilemap from a matrix (array of arrays)
+	// @param matrix is the matrix to set, every 1 will be collision, every 0 will not collide. (note: true and false works too)
 	set_from_matrix: function(matrix)
 	{
 		var index = new SSCD.Vector(0, 0);
@@ -1194,16 +1195,14 @@ SSCD.TilemapWorld.prototype = {
 		}
 	},
 	
-	// get the collision shape of a tile (or undefined if have no collision shape on this tile).
-	// @param index - the x and y index of the tile to get.
+	// get the collision shape of a tile (or undefined if have no collision shape on this tile)
+	// @param index - the x and y index of the tile to get
 	get_tile: function(index)
 	{
 		return this.__tiles[index.x + "_" + index.y];
 	},
 	
-	// set the collision shape of a tile.
-	// @param index - tile index.
-	// @param shape - shape to set.
+	// set the collision shape of a tile
 	__set_tile_shape: function(index, shape)
 	{
 		if (shape === null)
@@ -2352,49 +2351,6 @@ SSCD.Capsule.prototype = {
 // inherit from CompositeShape class.
 // this will fill the missing functions from parent, but will not replace functions existing in child.
 SSCD.extend(SSCD.CompositeShape.prototype, SSCD.Capsule.prototype);
-
-// FILE: shapes/fov.js
-
-/*
-* A FOV collision shape.
-* FOV is a special pizza-like shaped used to do stuff like field of view collision or range.
-* Basically FOV is a circle collision that only check angle range (imagine a running radar).
-* Author: Ronen Ness, 2015
-*/
-
-// define the fov shape.
-// @param position - center position (vector).
-// @param radius - circle radius (integer).
-// @param direction - degree, fov look-at direction.
-// @param range - degree, the vof angle range.
-SSCD.FOV = function (position, radius, direction, range)
-{
-	// call init chain
-	this.init();
-	
-	// set radius and size
-	this.__radius = radius;
-	this.__size = new SSCD.Vector(radius, radius).multiply_scalar_self(2);
-	this.__direction = direction;
-	this.__range = range;
-
-	// set starting position
-	this.set_position(position);
-};
-
-// FOV prototype
-SSCD.FOV.prototype = {
-	
-	// set type and collision type
-	// note: fov collide like circle, but we add the extra angle check after the basic collision.
-	__type: "fov",
-	__collision_type: "circle",
-
-};
-
-// inherit from basic shape class.
-// this will fill the missing functions from parent, but will not replace functions existing in child.
-SSCD.extend(SSCD.Circle.prototype, SSCD.FOV.prototype);
 
 // FILE: shapes/shapes_collider.js
 

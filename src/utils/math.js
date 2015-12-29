@@ -83,3 +83,27 @@ SSCD.Math.line_intersects = function (p0, p1, p2, p3) {
 SSCD.Math.is_on_line = function (v, l1, l2) {
 	return SSCD.Math.distance_to_line(v, l1, l2) <= 5;
 };
+
+
+// return shortest, positive distance between two given angles.
+// for example:
+//  50, 100 will return 50
+//  350, 10 will return 20
+// angles shoule be in 0-360 values (but negatives and >360 allowed as well)
+SSCD.Math.angles_dis = function(a0, a1) {
+
+	// convert to radians
+	a0 = SSCD.Math.to_radians(a0);
+	a1 = SSCD.Math.to_radians(a1);
+
+	// get distance
+	var max = Math.PI*2;
+	var da = (a1 - a0) % max;
+	var distance = 2*da % max - da;
+
+	// convert back to degrees
+	distance = SSCD.Math.to_degrees(distance);
+
+	// return abs value
+	return Math.abs(distance);
+};

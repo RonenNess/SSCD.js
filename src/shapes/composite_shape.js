@@ -8,8 +8,8 @@
 var SSCD = SSCD || {};
 
 // create a composite shape
-// position - optional starting position (vector)
-// objects - optional list of collision objects to start with
+// @param position - optional starting position (vector)
+// @param objects - optional list of collision objects to start with
 SSCD.CompositeShape = function (position, objects)
 {
 	// call init chain
@@ -17,12 +17,16 @@ SSCD.CompositeShape = function (position, objects)
 	this.__init_comp_shape(position, objects);
 };
 
-// set Rectangle methods
+// composite shape prototype
 SSCD.CompositeShape.prototype = {
 	
+	// set type and collision type
 	__type: "composite-shape",
+	__collision_type: "composite-shape",
 	
-	// init the composite shape
+	// init the composite shape.
+	// @param position - source position.
+	// @param objects - list of starting objects.
 	__init_comp_shape: function(position, objects)
 	{
 		// create empty list of shapes
@@ -42,7 +46,9 @@ SSCD.CompositeShape.prototype = {
 		}
 	},
 	
-	// render (for debug purposes)
+	// render (for debug purposes).
+	// @param ctx - 2d context of a canvas.
+	// @param camera_pos - optional camera position to transform the render position.
 	render: function (ctx, camera_pos)
 	{
 		// first render all shapes
@@ -53,7 +59,8 @@ SSCD.CompositeShape.prototype = {
 	},
 	
 	// repeal an object from this object.
-	// here we iterate over sub-object and repeal only from the ones we collide with
+	// here we iterate over sub-object and repeal only from the ones we collide with.
+	// read base shape repel() doc for more info.
 	repel: function(obj, force, iterations, factor_self, factor_other)
 	{
 		// do repel from independant shapes inside this composite shape
@@ -77,7 +84,8 @@ SSCD.CompositeShape.prototype = {
 		return ret;
 	},
 	
-	// set colors to override the debug rendering colors
+	// set colors to override the debug rendering colors.
+	// read base shape set_debug_render_colors() doc for more info.
 	set_debug_render_colors: function(fill_color, stroke_color)
 	{
 		this.__override_fill_color = fill_color;
@@ -88,7 +96,7 @@ SSCD.CompositeShape.prototype = {
 		}
 	},
 	
-	// get shapes list
+	// get shapes list.
 	get_shapes: function()
 	{
 		// if already got shapes list in cache return it
@@ -109,7 +117,7 @@ SSCD.CompositeShape.prototype = {
 		return ret;
 	},
 	
-	// return axis-aligned-bounding-box
+	// return axis-aligned-bounding-box.
 	build_aabb: function ()
 	{
 		// if no shapes return zero aabb
@@ -141,14 +149,14 @@ SSCD.CompositeShape.prototype = {
 		return ret;
 	},
 	
-	// called to update axis-aligned-bounding-box position
+	// called to update axis-aligned-bounding-box position.
 	__update_aabb_pos: function()
 	{
 		this.__aabb.position = this.__position.add(this.__aabb_pos_offset_c);
 	},
 	
-	// add shape to the composite shape
-	// shape is shape to add
+	// add shape to the composite shape.
+	// @param shape - the shape to add.
 	add: function (shape)
 	{
 		// make sure shape don't have a collision world
@@ -183,7 +191,7 @@ SSCD.CompositeShape.prototype = {
 		return shape;
 	},
 	
-	// hook to call when update tags - update all child objects with new tags
+	// hook to call when update tags - update all child objects with new tags.
 	__update_tags_hook: function()
 	{
 		// update all shapes about the new tags
@@ -195,7 +203,7 @@ SSCD.CompositeShape.prototype = {
 		}
 	},
 	
-	// remove a shape
+	// remove a shape.
 	remove: function (shape)
 	{
 		this.__shapes_list_c = undefined;
@@ -212,7 +220,7 @@ SSCD.CompositeShape.prototype = {
 		throw new SSCD.IllegalActionError("Shape to remove is not in composite shape!");
 	},
 	
-	// on position change - update all shapes
+	// on position change - update all shapes.
 	__update_position_hook: function ()
 	{
 		for (var i = 0; i < this.__shapes.length; ++i)

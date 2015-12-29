@@ -8,8 +8,8 @@
 var SSCD = SSCD || {};
 
 // define the rectangle shape
-// position - starting position (vector)
-// size - rectangle size (vector)
+// @param position - starting position (vector)
+// @param size - rectangle size (vector)
 SSCD.Rectangle = function (position, size)
 {
 	// call init chain
@@ -22,12 +22,16 @@ SSCD.Rectangle = function (position, size)
 	this.set_position(position);
 };
 
-// set Rectangle methods
+// rectangle prototype
 SSCD.Rectangle.prototype = {
 	
+	// set type and collision type
 	__type: "rectangle",
+	__collision_type: "rectangle",
 	
 	// render (for debug purposes)
+	// @param ctx - 2d context of a canvas
+	// @param camera_pos - optional camera position to transform the render position
 	render: function (ctx, camera_pos)
 	{
 		// apply camera on position

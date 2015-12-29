@@ -3,14 +3,10 @@
 * Author: Ronen Ness, 2015
 */
 
-
-// set namespace
-var SSCD = SSCD || {};
-
 // create a capsule shape. implemented by a composite-shape with two circles and a rectangle.
-// position - optional starting position (vector)
-// size - size in pixels (vector)
-// standing - if true, capsule will be standing. else, will lie down. (default: true)
+// @param position - optional starting position (vector)
+// @param size - size in pixels (vector)
+// @param standing - if true, capsule will be standing. else, will lie down. (default: true)
 SSCD.Capsule = function (position, size, standing)
 {
 	// call init chain
@@ -42,7 +38,7 @@ SSCD.Capsule = function (position, size, standing)
 	this.__init_comp_shape(position, objects);
 };
 
-// set Rectangle methods
+// Capsule prototype
 SSCD.Capsule.prototype = {
 	
 	__type: "capsule",

@@ -3,13 +3,9 @@
 * Author: Ronen Ness, 2015
 */
 
-
-// set namespace
-var SSCD = SSCD || {};
-
 // define the circle shape
-// position - starting position (vector)
-// radius - circle radius (integer)
+// @param position - center position (vector)
+// @param radius - circle radius (integer)
 SSCD.Circle = function (position, radius)
 {
 	// call init chain
@@ -23,12 +19,16 @@ SSCD.Circle = function (position, radius)
 	this.set_position(position);
 };
 
-// set circle methods
+// Circle prototype
 SSCD.Circle.prototype = {
 	
+	// set type and collision type
 	__type: "circle",
+	__collision_type: "circle",
 	
 	// render (for debug purposes)
+	// @param ctx - 2d context of a canvas
+	// @param camera_pos - optional camera position to transform the render position
 	render: function (ctx, camera_pos)
 	{
 		// apply camera on position

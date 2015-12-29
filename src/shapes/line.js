@@ -3,13 +3,9 @@
 * Author: Ronen Ness, 2015
 */
 
-
-// set namespace
-var SSCD = SSCD || {};
-
 // define the line shape
-// source - starting position (vector)
-// dest - destination point (vector)
+// @param source - starting position (vector)
+// @param dest - destination point from source (vector)
 // output line will be from source to dest, and when you move it you will actually move the source position.
 SSCD.Line = function (source, dest)
 {
@@ -23,12 +19,16 @@ SSCD.Line = function (source, dest)
 	this.set_position(source);
 };
 
-// set line methods
+// Line prototype
 SSCD.Line.prototype = {
 	
+	// set type and collision type
 	__type: "line",
+	__collision_type: "line",
 	
 	// render (for debug purposes)
+	// @param ctx - 2d context of a canvas
+	// @param camera_pos - optional camera position to transform the render position
 	render: function (ctx, camera_pos)
 	{
 					

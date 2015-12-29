@@ -3,14 +3,10 @@
 * Author: Ronen Ness, 2015
 */
 
-
-// set namespace
-var SSCD = SSCD || {};
-
 // define the line shape
-// position - starting position (vector)
-// points - list of vectors that will make the lines.
-// closed - default to false. if true, will close the shape.
+// @param position - starting position (vector)
+// @param points - list of vectors that will make the lines.
+// @param closed - if true, will create a line between last and first points. default to false.
 SSCD.LineStrip = function (position, points, closed)
 {
 	// call init chain
@@ -35,12 +31,16 @@ SSCD.LineStrip = function (position, points, closed)
 	this.set_position(position);
 };
 
-// set line methods
+// line-strip prototype
 SSCD.LineStrip.prototype = {
 	
+	// set type and collision type
 	__type: "line-strip",
+	__collision_type: "line-strip",
 	
 	// render (for debug purposes)
+	// @param ctx - 2d context of a canvas
+	// @param camera_pos - optional camera position to transform the render position
 	render: function (ctx, camera_pos)
 	{
 					
